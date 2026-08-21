@@ -20,6 +20,7 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+          cache: gradle
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -28,27 +29,24 @@ jobs:
         run: chmod +x gradlew
 
       - name: Setup Keystore
-        id: setup_keystore
         run: |
-          KEYSTORE_FILE="${{ runner.temp }}/release.jks"
-          if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
-            echo "Decoding KEYSTORE_BASE64 secret..."
-            echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > "$KEYSTORE_FILE"
-            echo "STORE_PASSWORD=${{ secrets.STORE_PASSWORD }}" >> $GITHUB_ENV
-            echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
-          else
-            echo "No KEYSTORE_BASE64 secret found. Generating temporary signing key..."
-            keytool -genkeypair -v -keystore "$KEYSTORE_FILE" -storepass android -alias upload -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=TurnManager, OU=Dev, O=TurnManager, L=City, S=State, C=US"
-            echo "STORE_PASSWORD=android" >> $GITHUB_ENV
-            echo "KEY_PASSWORD=android" >> $GITHUB_ENV
-          fi
-          echo "KEYSTORE_PATH=$KEYSTORE_FILE" >> $GITHUB_ENV
+          KEYSTORE_FILE="${{ runner.temp }}/my_keystore.jks"
+
+          echo "${{ secrets.SIGNING_KEY }}" | base64 --decode > "$KEYSTORE_FILE"
+
+          test -s "$KEYSTORE_FILE"
+
+          echo "KEYSTORE_PATH=$KEYSTORE_FILE" >> "$GITHUB_ENV"
+          echo "STORE_PASSWORD=${{ secrets.STORE_PASSWORD }}" >> "$GITHUB_ENV"
+          echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> "$GITHUB_ENV"
+          echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> "$GITHUB_ENV"
 
       - name: Build Release APK and AAB
         run: ./gradlew assembleRelease bundleRelease
         env:
           KEYSTORE_PATH: ${{ env.KEYSTORE_PATH }}
           STORE_PASSWORD: ${{ env.STORE_PASSWORD }}
+          KEY_ALIAS: ${{ env.KEY_ALIAS }}
           KEY_PASSWORD: ${{ env.KEY_PASSWORD }}
 
       - name: Upload Release APK
