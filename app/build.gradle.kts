@@ -15,7 +15,7 @@ android {
 
   defaultConfig {
     applicationId = "com.magd.turnmanager"
-    minSdk = 24
+    minSdk = 23
     targetSdk = 36
     versionCode = 1
     versionName = "1.0"
