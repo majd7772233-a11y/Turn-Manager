@@ -23,11 +23,13 @@ import kotlin.random.Random
 
 /**
  * SmartNotificationManager:
- * Intelligently monitors device active usage without battery drain.
- * ONLY fires witty, humorous, and competitive banter notifications when:
- * 1. Screen is ON and actively in use.
+ * Monitors device active usage without battery drain.
+ * ONLY fires witty, humorous, competitive banter notifications when:
+ * 1. Screen is actively in use (interactive).
  * 2. NO turn is currently running (TurnEngine is IDLE).
- * 3. Never triggers when phone is sleeping/off/unused (e.g. at night).
+ * 3. Exactly after 10 minutes of active phone usage without starting a turn.
+ * 4. If no turn is started after first notification, another notification fires every 10 minutes.
+ * 5. Automatically dismisses immediately when ANY turn starts.
  */
 class SmartNotificationManager(private val context: Context) {
 
@@ -35,49 +37,78 @@ class SmartNotificationManager(private val context: Context) {
     private var monitorJob: Job? = null
 
     private var isScreenInteractive = false
-    private var screenOnTimestamp = 0L
     private var activeScreenMinutesWithoutTurn = 0
-    private var consecutiveNudgesSent = 0
     private var isReceiverRegistered = false
+
+    private var lastNudgeTitle: String = ""
+    private var lastNudgeMessage: String = ""
 
     companion object {
         private const val TAG = "SmartNotifManager"
         const val SMART_CHANNEL_ID = "smart_turn_nudges_channel"
         const val SMART_NUDGE_NOTIFICATION_ID = 2001
-        const val BANTER_NOTIFICATION_ID = 2002
 
         const val EXTRA_START_RANDOM_TURN = "EXTRA_START_RANDOM_TURN"
         const val EXTRA_TARGET_USER_ID = "EXTRA_TARGET_USER_ID"
         const val EXTRA_RANDOM_DURATION_SEC = "EXTRA_RANDOM_DURATION_SEC"
 
-        // Generates random duration between 1 second and 2 hours (7200 seconds)
+        // Generates random duration between 1 second and 1.5 hours (5400 seconds)
         fun generateRandomDurationSeconds(): Long {
             val randomChoice = Random.nextInt(0, 10)
             return when {
-                // 30% chance: clean minute intervals (1m to 45m)
-                randomChoice in 0..2 -> (1..45).random() * 60L
-                // 30% chance: hour intervals (1h to 2h)
-                randomChoice in 3..5 -> listOf(3600L, 4500L, 5400L, 6300L, 7200L).random()
-                // 20% chance: fun mixed seconds (e.g. 45s, 90s, 3m 30s)
-                randomChoice in 6..7 -> listOf(15L, 30L, 45L, 90L, 150L, 210L, 330L).random()
-                // 20% chance: completely random second between 1s and 7200s
-                else -> Random.nextLong(1L, 7201L)
+                // 10% chance: quick seconds (1s, 15s, 30s, 45s)
+                randomChoice == 0 -> listOf(1L, 15L, 30L, 45L).random()
+                // 40% chance: common minute intervals (1m, 2m, 3m, 5m, 10m, 15m, 20m, 30m, 45m)
+                randomChoice in 1..4 -> listOf(60L, 120L, 180L, 300L, 600L, 900L, 1200L, 1800L, 2700L).random()
+                // 30% chance: hour intervals (1h, 1h 15m, 1h 30m)
+                randomChoice in 5..7 -> listOf(3600L, 4500L, 5400L).random()
+                // 20% chance: random range
+                else -> (1..90).random() * 60L
             }
         }
 
         fun formatSecondsToDisplay(seconds: Long): String {
+            return formatDurationText(seconds, false)
+        }
+
+        fun formatDurationText(seconds: Long, isOpen: Boolean): String {
+            if (isOpen) return "مفتوح ♾️"
             val hrs = seconds / 3600
             val mins = (seconds % 3600) / 60
             val secs = seconds % 60
             return when {
-                hrs > 0 && mins > 0 -> "$hrs س و $mins د"
-                hrs > 0 -> "$hrs ساعة"
-                mins > 0 && secs > 0 -> "$mins د و $secs ث"
-                mins > 0 -> "$mins دقيقة"
-                else -> "$secs ثانية"
+                hrs > 0 && mins > 0 -> "$hrs س $mins د"
+                hrs > 0 -> "$hrs س"
+                mins > 0 && secs > 0 -> "$mins د $secs ث"
+                mins > 0 -> "$mins د"
+                else -> "$secs ث"
             }
         }
     }
+
+    // Rich library of humorous, witty, challenging, motivational Arabic notification messages
+    private val smartNudgeLibrary = listOf(
+        Pair("ليش ما تعمل دور؟ 🤔", "المغالطة مش مليحة.. شايفك ماسك الجوال، قوم اعمل دور الآن وسيبك من التمطيط! 🏃‍♂️💨"),
+        Pair("مش ناوي تعمل دور صح؟ 🤨", "له له له! لسه فاتح الجوال وناسي الدور؟ قوم اعمل دور الآن بلا كسل ولا لف ودوران! ⚡"),
+        Pair("يا حبيبنا الدور واقف! ⏳", "شاشتك شغالة ومولعة والعداد نايم في العسل.. اضغط زر البدء وخلينا نلعب! 🎮"),
+        Pair("الكسل ممنوع هنا! 🚫", "الجوال بيدك والوقت يمر.. مين اللي عليه الدور؟ لا تخليه يفلت منك! 🎯"),
+        Pair("نداء عاجل للأبطال! 🚨", "كل ثانية تمشي بدون دور تعتبر خسارة فادحة في متعة الجلسة.. ابدأ الآن! 🏆"),
+        Pair("وينك يا وحش؟ 🔥", "الدور يناديك بأعلى صوت.. دوس بدء وورّينا سرعتك وإنجازك! 🚀"),
+        Pair("تحدي السرعة والتركيز ⏱️", "شايفك مركز بالشاشة.. ليش ما تترجم هذا التركيز في دور أسطوري يحطم الأرقام؟ 💥"),
+        Pair("صفارة الإنذار الرياضية 📣", "الحكم جاهز واللاعبين ينتظرون.. لا تعلق الجلسة، ابدأ دورك فورا! ⚽"),
+        Pair("الوقت من ذهب! 🥇", "لا تضيع الدقائق.. دور سريع خفيف لطيف يجدد النشاط والحماس! ✨"),
+        Pair("سؤال وجيه وصريح 🧐", "ماسك الجوال تتفرج ولا ناوي تبهرنا بدور جديد؟ الزر تحتك اضغطه ولا تحتار! 💡"),
+        Pair("غرفة التحكم تناديك 🛰️", "الأنظمة جاهزة للملاحة.. حدد اللاعب والوقت وانطلق برحلة الدور القادمة! 🛸"),
+        Pair("يا فنان وين النشاط؟ 🎨", "الأدوار تحتاج لمستك الإبداعية.. اختار وقتك ودوس بدء بدون تردد! 🌟"),
+        Pair("العداد في انتظارك 📊", "إحصائياتك محتاجة دفعة قوية.. دور واحد يرفعك لصدارة الترتيب! 📈"),
+        Pair("الفرصة لا تتكرر! 🎁", "جرب حظك الآن مع دور عشوائي مفاجئ وشوف التحدي الجديد! 🎲"),
+        Pair("تراك طولت يا غالي! ☕", "مرت عشر دقائق وأنت تتصفح.. ريح بالك واعمل دور واستمتع! 🥳"),
+        Pair("التاج الملكي لمن؟ 👑", "المنافسة مشتعلة والعرش ينتظر البطل.. ابدأ دورك واثبت وجودك! 🛡️"),
+        Pair("سجل بطولاتك يناديك 📜", "كل دور توثقه يظل ذكرى حلوة.. لا تفوت توثيق هذه اللحظة! 💎"),
+        Pair("طاقتك وين راحت؟ ⚡", "شعلل الجو وأشعل الحماس بدور فوري.. كلنا بانتظارك! 🦁"),
+        Pair("رادار الجلسة كشفك! 📡", "الرادار يؤكد وجودك على الهاتف.. مفيش مفر، الدور عليك! 🎯"),
+        Pair("حركة وتفاعل يا كابتن! 🧗", "الدور ما ياخذ ثواني عشان تبدأه.. دوس بدء ولا تأجل! 🏁")
+    )
 
     private val screenReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -116,7 +147,6 @@ class SmartNotificationManager(private val context: Context) {
 
     private fun onScreenTurnedOn() {
         isScreenInteractive = true
-        screenOnTimestamp = System.currentTimeMillis()
         Log.d(TAG, "Screen is ON and interactive. Smart monitor tracking started.")
     }
 
@@ -124,7 +154,6 @@ class SmartNotificationManager(private val context: Context) {
         isScreenInteractive = false
         activeScreenMinutesWithoutTurn = 0
         Log.d(TAG, "Screen is OFF. Going into complete silent mode. No notifications.")
-        // Clear non-critical banter notifications when phone goes to sleep
         dismissSmartNotifications()
     }
 
@@ -155,31 +184,28 @@ class SmartNotificationManager(private val context: Context) {
         monitorJob?.cancel()
         monitorJob = scope.launch {
             while (isActive) {
-                // Check every 60 seconds
+                // Check every 60 seconds (1 minute)
                 delay(60_000L)
 
                 try {
-                    // Check if smart notifications are enabled in preferences
                     val repository = DatabaseModule.getRepository(context)
                     val isEnabledPref = repository.getPreferenceValue("pref_smart_notifications_enabled", "true")
                     if (isEnabledPref != "true") {
                         continue
                     }
 
-                    // Strict condition: Screen must be interactive and ON
                     val powerManager = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
                     val isDeviceCurrentlyActive = powerManager?.isInteractive == true && isScreenInteractive
 
                     if (!isDeviceCurrentlyActive) {
-                        // Phone is off / asleep -> Do nothing! Completely silent!
                         continue
                     }
 
                     val currentState = TurnEngine.state.value
                     if (currentState != TurnState.IDLE) {
-                        // Turn is currently running or paused -> Reset idle counter
+                        // Turn is currently running or paused -> Reset idle counter and dismiss
                         activeScreenMinutesWithoutTurn = 0
-                        consecutiveNudgesSent = 0
+                        dismissSmartNotifications()
                         continue
                     }
 
@@ -187,23 +213,12 @@ class SmartNotificationManager(private val context: Context) {
                     activeScreenMinutesWithoutTurn++
                     Log.d(TAG, "Active device usage without turn: $activeScreenMinutesWithoutTurn minutes")
 
-                    // Evaluation points
-                    when (activeScreenMinutesWithoutTurn) {
-                        10 -> {
-                            // Level 1 Nudge (10 minutes active without turn)
-                            showLevel1FunnyNudge()
-                            consecutiveNudgesSent++
-                        }
-                        20 -> {
-                            // Level 2 Nudge (20 minutes active without turn)
-                            showLevel2FunnyNudge()
-                            consecutiveNudgesSent++
-                        }
-                        35, 50, 70 -> {
-                            // High level Banter & Racing / Competitive Teasing
-                            showCompetitiveBanterNotification()
-                            consecutiveNudgesSent++
-                        }
+                    // Show notification every 10 minutes (10, 20, 30, 40, 50, 60...)
+                    if (activeScreenMinutesWithoutTurn > 0 && activeScreenMinutesWithoutTurn % 10 == 0) {
+                        val nudge = smartNudgeLibrary.random()
+                        lastNudgeTitle = nudge.first
+                        lastNudgeMessage = nudge.second
+                        sendSmartNudgeNotification(lastNudgeTitle, lastNudgeMessage)
                     }
                 } catch (e: Exception) {
                     Log.e(TAG, "Error in smart monitoring loop", e)
@@ -212,102 +227,80 @@ class SmartNotificationManager(private val context: Context) {
         }
     }
 
-    private suspend fun showLevel1FunnyNudge() {
-        val users = TurnEngine.usersList
-        val currentUser = TurnEngine.currentUser.value ?: users.firstOrNull()
-        val userName = currentUser?.name ?: "يا بطل"
-
-        val title = "ليش ما تعمل دور؟ 🤔"
-        val body = "المغالطة مش مليحة.. شايفك ماسك الجوال، قوم اعمل دور الآن وسيبك من التمطيط! 🏃‍♂️💨"
-
-        sendSmartNudge(
-            title = title,
-            message = body,
-            notificationId = SMART_NUDGE_NOTIFICATION_ID,
-            targetUser = currentUser,
-            includeRandomTurnAction = true
-        )
-    }
-
-    private suspend fun showLevel2FunnyNudge() {
-        val users = TurnEngine.usersList
-        val currentUser = TurnEngine.currentUser.value ?: users.firstOrNull()
-        val userName = currentUser?.name ?: "يا كسلان"
-
-        val title = "مش ناوي تعمل دور صح؟ 🤨"
-        val body = "له له له! لسه فاتح الجوال وناسي الدور؟ قوم اعمل دور الآن بلا كسل ولا لف ودوران! ⚡"
-
-        sendSmartNudge(
-            title = title,
-            message = body,
-            notificationId = SMART_NUDGE_NOTIFICATION_ID,
-            targetUser = currentUser,
-            includeRandomTurnAction = true
-        )
-    }
-
-    private suspend fun showCompetitiveBanterNotification() {
-        val users = TurnEngine.usersList
-        if (users.isEmpty()) return
-
-        // Sort users by turns count or activity
-        val sortedUsers = users.sortedByDescending { it.turnsCount }
-        val topUser = sortedUsers.first()
-        val lowestUser = sortedUsers.last()
-
-        val (title, message, targetUser) = if (users.size >= 2 && topUser.id != lowestUser.id) {
-            val phrases = listOf(
-                Triple(
-                    "سباق وتحدي الأدوار! 🔥",
-                    "يا ${lowestUser.name}! لا تدع ${topUser.name} يهزمك بالإحصائيات (${topUser.turnsCount} أدوار مقابل ${lowestUser.turnsCount})! ادخل عوّض الآن 🏆",
-                    lowestUser
-                ),
-                Triple(
-                    "وين رحت يا ${lowestUser.name}؟ 😎",
-                    "${topUser.name} مسيطر على الجلسة ومولّع الأرقام.. ادخل خذ دورك واقلب الطاولة عليه! ⚡",
-                    lowestUser
-                ),
-                Triple(
-                    "نداء العمالقة! 👑",
-                    "يا ${lowestUser.name}، ${topUser.name} جالس يضحك على أرقامك! اضغط دور عشوائي وفاجئه الآن 🎲",
-                    lowestUser
-                )
-            )
-            phrases.random()
-        } else {
-            val soloPhrases = listOf(
-                Triple("الساحة تناديك! 🎯", "الوقت يمشي والعداد واقف.. اعمل دور واكسر أرقامك القياسية السابقة! 🚀", topUser),
-                Triple("تحدي النفس والوقت ⏳", "أنت قد التحدي! جرب دور عشوائي سريع وشوف تقدر تنجز فيه ولا لا! 🎲", topUser)
-            )
-            soloPhrases.random()
+    fun refreshCurrentNudge() {
+        if (lastNudgeTitle.isEmpty()) {
+            val nudge = smartNudgeLibrary.first()
+            lastNudgeTitle = nudge.first
+            lastNudgeMessage = nudge.second
         }
-
-        sendSmartNudge(
-            title = title,
-            message = message,
-            notificationId = BANTER_NOTIFICATION_ID,
-            targetUser = targetUser,
-            includeRandomTurnAction = true
-        )
+        sendSmartNudgeNotification(lastNudgeTitle, lastNudgeMessage)
     }
 
-    private fun sendSmartNudge(
+    fun sendSmartNudgeNotification(
         title: String,
-        message: String,
-        notificationId: Int,
-        targetUser: UserEntity?,
-        includeRandomTurnAction: Boolean
+        message: String
     ) {
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        // Intent to open Main App
+        // Intent to open Main App on notification body click
         val mainIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
         val pMain = PendingIntent.getActivity(
             context,
-            notificationId + 10,
+            SMART_NUDGE_NOTIFICATION_ID + 10,
             mainIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val currentUser = TurnEngine.currentUser.value
+        val userName = currentUser?.name ?: "اللاعب"
+        val userEmoji = currentUser?.avatarEmoji ?: "👤"
+        val targetDurationSec = TurnEngine.targetDurationSeconds.value
+        val isTargetOpen = TurnEngine.isTargetOpenMode.value
+        val durationStr = formatDurationText(targetDurationSec, isTargetOpen)
+
+        // Action 1: Switch / Cycle User Name ("اللاعب: [اسم المستخدم]")
+        val cycleUserIntent = Intent(context, TurnService::class.java).apply {
+            action = TurnService.ACTION_SMART_CYCLE_USER
+        }
+        val pCycleUser = PendingIntent.getService(
+            context,
+            SMART_NUDGE_NOTIFICATION_ID + 20,
+            cycleUserIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        // Action 2: Switch / Cycle Duration ("المدة: [الوقت]")
+        val cycleTimeIntent = Intent(context, TurnService::class.java).apply {
+            action = TurnService.ACTION_SMART_CYCLE_TIME
+        }
+        val pCycleTime = PendingIntent.getService(
+            context,
+            SMART_NUDGE_NOTIFICATION_ID + 21,
+            cycleTimeIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        // Action 3: Start Turn ("بدء الدور ▶️")
+        val startTurnIntent = Intent(context, TurnService::class.java).apply {
+            action = TurnService.ACTION_SMART_START_TURN
+        }
+        val pStartTurn = PendingIntent.getService(
+            context,
+            SMART_NUDGE_NOTIFICATION_ID + 22,
+            startTurnIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        // Action 4: Start Random Turn ("دور عشوائي 🎲")
+        val randomTurnIntent = Intent(context, TurnService::class.java).apply {
+            action = TurnService.ACTION_SMART_START_RANDOM
+        }
+        val pRandomTurn = PendingIntent.getService(
+            context,
+            SMART_NUDGE_NOTIFICATION_ID + 23,
+            randomTurnIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
@@ -315,57 +308,22 @@ class SmartNotificationManager(private val context: Context) {
             .setSmallIcon(android.R.drawable.ic_dialog_alert)
             .setContentTitle(title)
             .setContentText(message)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
+            .setStyle(NotificationCompat.BigTextStyle().bigText("$message\n\n📌 اللاعب الحالي: $userEmoji $userName | المدة: $durationStr"))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .setContentIntent(pMain)
             .setColor(Color.parseColor("#9C27B0"))
+            .addAction(android.R.drawable.ic_menu_myplaces, "اللاعب: $userName 🔄", pCycleUser)
+            .addAction(android.R.drawable.ic_menu_recent_history, "المدة: $durationStr ⏱️", pCycleTime)
+            .addAction(android.R.drawable.ic_media_play, "بدء الدور ▶️", pStartTurn)
+            .addAction(android.R.drawable.ic_menu_rotate, "دور عشوائي 🎲", pRandomTurn)
 
-        // Action 1: "بدء دور ▶️" (Opens app and focuses on starting a turn)
-        val startTurnIntent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            putExtra("ACTION_FROM_NOTIFICATION", "START_TURN")
-            targetUser?.let { putExtra(EXTRA_TARGET_USER_ID, it.id) }
-        }
-        val pStartTurn = PendingIntent.getActivity(
-            context,
-            notificationId + 20,
-            startTurnIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        builder.addAction(android.R.drawable.ic_media_play, "بدء دور ▶️", pStartTurn)
-
-        // Action 2: "دور عشوائي 🎲" (generates duration between 1s and 2 hours for target user)
-        if (includeRandomTurnAction) {
-            val randomDurationSec = generateRandomDurationSeconds()
-            val formattedTime = formatSecondsToDisplay(randomDurationSec)
-
-            val randomTurnIntent = Intent(context, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                putExtra(EXTRA_START_RANDOM_TURN, true)
-                putExtra(EXTRA_RANDOM_DURATION_SEC, randomDurationSec)
-                targetUser?.let { putExtra(EXTRA_TARGET_USER_ID, it.id) }
-            }
-            val pRandomTurn = PendingIntent.getActivity(
-                context,
-                notificationId + 30,
-                randomTurnIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            builder.addAction(
-                android.R.drawable.ic_menu_rotate,
-                "دور عشوائي ($formattedTime) 🎲",
-                pRandomTurn
-            )
-        }
-
-        manager.notify(notificationId, builder.build())
+        manager.notify(SMART_NUDGE_NOTIFICATION_ID, builder.build())
     }
 
     fun dismissSmartNotifications() {
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.cancel(SMART_NUDGE_NOTIFICATION_ID)
-        manager.cancel(BANTER_NOTIFICATION_ID)
     }
 
     private fun createChannel() {

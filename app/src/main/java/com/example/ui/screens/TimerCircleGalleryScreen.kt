@@ -168,6 +168,86 @@ val CIRCLE_STYLES_CATALOG = listOf(
         description = "تصميم بسيط وعصري وواضح للغاية بألوان متباينة وحواف نظيفة ومريحة للعين.",
         emoji = "⭕",
         accentColors = listOf(Color(0xFF3D5AFE), Color(0xFF651FFF))
+    ),
+    CircleStyleInfo(
+        key = "Quantum Reactor",
+        title = "مفاعل كوانتوم طاقي",
+        englishName = "Quantum Fusion Reactor",
+        category = "NEON",
+        categoryLabel = "طاقة مستقبلية",
+        description = "حلقات إلكترونية مدارية تدور حول نواة بلازمية متوهجة مع جسيمات ضوئية نابضة.",
+        emoji = "⚛️",
+        accentColors = listOf(Color(0xFF00E5FF), Color(0xFFFF0055))
+    ),
+    CircleStyleInfo(
+        key = "Emerald Dragon",
+        title = "تنين الزمرد الأسطوري",
+        englishName = "Emerald Dragon Scale",
+        category = "3D",
+        categoryLabel = "زمرد وأساطير",
+        description = "حراشف الزمرد والتنين الأخضر الملكي المتوهجة بلمعان ذهبي وتموجات أسطورية.",
+        emoji = "🐉",
+        accentColors = listOf(Color(0xFF00E676), Color(0xFFFFD700))
+    ),
+    CircleStyleInfo(
+        key = "Hyperdrive Warp",
+        title = "قفزة السرعة الفضائية",
+        englishName = "Hyperdrive Warp Jump",
+        category = "3D",
+        categoryLabel = "فضاء وسرعة",
+        description = "أشعة نجمية تنطلق نحو الأفق الفضائي بسرعة الضوء مع حلقات صدمية متسارعة.",
+        emoji = "🚀",
+        accentColors = listOf(Color(0xFF00B0FF), Color(0xFFFFFFFF))
+    ),
+    CircleStyleInfo(
+        key = "Sunset Horizon",
+        title = "غروب شمس سينثويف",
+        englishName = "Synthwave Sunset Horizon",
+        category = "CLASSIC",
+        categoryLabel = "ريترو وغروب",
+        description = "خطوط الأفق المستوحاة من موسيقى الريترو والثمانينات بتدرج برتقالي وبنفسجي مذهل.",
+        emoji = "🌅",
+        accentColors = listOf(Color(0xFFFF6D00), Color(0xFFFF007F))
+    ),
+    CircleStyleInfo(
+        key = "Electric Plasma",
+        title = "صاعقة البلازما الكهربائية",
+        englishName = "Electric Plasma Storm",
+        category = "NEON",
+        categoryLabel = "صواعق وبرق",
+        description = "شرارات وصواعق كهربائية زرقاء متفرعة تدور حول المحيط بطاقة حركية مكثفة.",
+        emoji = "⚡",
+        accentColors = listOf(Color(0xFF00E5FF), Color(0xFF7C4DFF))
+    ),
+    CircleStyleInfo(
+        key = "Cherry Blossom",
+        title = "ساكورا الزهور اليابانية",
+        englishName = "Japanese Sakura Blossom",
+        category = "LIQUID",
+        categoryLabel = "طبيعة وزهور",
+        description = "بتلات زهور الساكورا الوردية المتطايرة في نسيم هادئ وتصميم مريح ومسالم.",
+        emoji = "🌸",
+        accentColors = listOf(Color(0xFFFF80AB), Color(0xFFFF4081))
+    ),
+    CircleStyleInfo(
+        key = "Diamond Black Hole",
+        title = "ثقب أسود ماسي",
+        englishName = "Diamond Gravity Black Hole",
+        category = "3D",
+        categoryLabel = "ثقب أسود وجاذبية",
+        description = "انحناء ضوئي جاذبي فائق حول قرص أسود عميق بإطار ماسي فضي شديد التباين.",
+        emoji = "🕳️",
+        accentColors = listOf(Color(0xFF80D8FF), Color(0xFFCFD8DC))
+    ),
+    CircleStyleInfo(
+        key = "Steampunk Clockwork",
+        title = "تروس وساعة ستيم بانك",
+        englishName = "Steampunk Brass Clockwork",
+        category = "CLASSIC",
+        categoryLabel = "تروس وميكانيكا",
+        description = "مسننات نحاسية وبرونزية متداخلة تدور بدقة ميكانيكية وسحر كلاسيكي عتيق.",
+        emoji = "⚙️",
+        accentColors = listOf(Color(0xFFD4AF37), Color(0xFFCD7F32))
     )
 )
 

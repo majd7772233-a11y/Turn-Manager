@@ -27,6 +27,8 @@ class TurnService : Service() {
     private var isServiceRunning = false
     private var smartNotificationManager: SmartNotificationManager? = null
     private var isNotificationTemporarilyHidden = false
+    private var wasAutoPausedByScreenOff = false
+    private var isScreenReceiverRegistered = false
 
     companion object {
         const val CHANNEL_ID = "turn_manager_channel"
@@ -44,6 +46,12 @@ class TurnService : Service() {
         const val ACTION_RESTORE_NOTIFICATION = "com.example.action.RESTORE_NOTIFICATION"
         const val ACTION_APP_FOREGROUND = "com.example.action.APP_FOREGROUND"
         const val ACTION_APP_BACKGROUND = "com.example.action.APP_BACKGROUND"
+
+        // Smart Notification Interactive Action Strings
+        const val ACTION_SMART_CYCLE_USER = "com.example.action.SMART_CYCLE_USER"
+        const val ACTION_SMART_CYCLE_TIME = "com.example.action.SMART_CYCLE_TIME"
+        const val ACTION_SMART_START_TURN = "com.example.action.SMART_START_TURN"
+        const val ACTION_SMART_START_RANDOM = "com.example.action.SMART_START_RANDOM"
 
         @Volatile
         var isAppInForeground: Boolean = false
@@ -94,14 +102,58 @@ class TurnService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    private val screenPowerReceiver = object : android.content.BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                Intent.ACTION_SCREEN_OFF -> {
+                    val currentState = TurnEngine.state.value
+                    if (currentState == TurnState.RUNNING || currentState == TurnState.OPEN_MODE) {
+                        wasAutoPausedByScreenOff = true
+                        TurnEngine.pauseTurn()
+                    }
+                }
+                Intent.ACTION_SCREEN_ON, Intent.ACTION_USER_PRESENT -> {
+                    if (wasAutoPausedByScreenOff && TurnEngine.state.value == TurnState.PAUSED) {
+                        wasAutoPausedByScreenOff = false
+                        TurnEngine.resumeTurn()
+                    }
+                }
+            }
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
         observeEngine()
+        registerScreenPowerReceiver()
         
         // Initialize Smart Humorous Notification Monitor
         smartNotificationManager = SmartNotificationManager(this).apply {
             startMonitoring()
+        }
+    }
+
+    private fun registerScreenPowerReceiver() {
+        if (!isScreenReceiverRegistered) {
+            val filter = android.content.IntentFilter().apply {
+                addAction(Intent.ACTION_SCREEN_OFF)
+                addAction(Intent.ACTION_SCREEN_ON)
+                addAction(Intent.ACTION_USER_PRESENT)
+            }
+            registerReceiver(screenPowerReceiver, filter)
+            isScreenReceiverRegistered = true
+        }
+    }
+
+    private fun unregisterScreenPowerReceiver() {
+        if (isScreenReceiverRegistered) {
+            try {
+                unregisterReceiver(screenPowerReceiver)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            isScreenReceiverRegistered = false
         }
     }
 
@@ -142,25 +194,32 @@ class TurnService : Service() {
                 stopSelf()
             }
             ACTION_PAUSE -> {
+                wasAutoPausedByScreenOff = false
                 TurnEngine.pauseTurn()
             }
             ACTION_RESUME -> {
+                wasAutoPausedByScreenOff = false
                 TurnEngine.resumeTurn()
             }
             ACTION_CANCEL -> {
+                wasAutoPausedByScreenOff = false
                 TurnEngine.cancelTurn()
             }
             ACTION_FINISH -> {
+                wasAutoPausedByScreenOff = false
                 TurnEngine.finishTurn(saveRecord = true)
             }
             ACTION_NEXT -> {
+                wasAutoPausedByScreenOff = false
                 TurnEngine.rotateToNextUser()
             }
             ACTION_WIDGET_START -> {
+                wasAutoPausedByScreenOff = false
                 isNotificationTemporarilyHidden = false
                 val targetDuration = TurnEngine.targetDurationSeconds.value
                 val isTargetOpen = TurnEngine.isTargetOpenMode.value
                 TurnEngine.startTurn(targetDuration, isTargetOpen)
+                smartNotificationManager?.dismissSmartNotifications()
                 QuickTurnWidgetProvider.updateAllWidgets(this)
             }
             ACTION_WIDGET_CYCLE_USER -> {
@@ -196,6 +255,45 @@ class TurnService : Service() {
                 val prevIndex = if (currentIndex > 0) currentIndex - 1 else TIME_CYCLE_LIST.size - 1
                 val (prevSecs, prevOpen) = TIME_CYCLE_LIST[prevIndex]
                 TurnEngine.setTargetDuration(prevSecs, prevOpen)
+                QuickTurnWidgetProvider.updateAllWidgets(this)
+            }
+            ACTION_SMART_CYCLE_USER -> {
+                val users = TurnEngine.usersList
+                if (users.isNotEmpty()) {
+                    val current = TurnEngine.currentUser.value
+                    val currentIndex = users.indexOfFirst { it.id == current?.id }
+                    val nextIndex = (currentIndex + 1) % users.size
+                    TurnEngine.selectUser(users[nextIndex].id)
+                }
+                QuickTurnWidgetProvider.updateAllWidgets(this)
+                smartNotificationManager?.refreshCurrentNudge()
+            }
+            ACTION_SMART_CYCLE_TIME -> {
+                val currentSecs = TurnEngine.targetDurationSeconds.value
+                val isOpen = TurnEngine.isTargetOpenMode.value
+                val currentIndex = TIME_CYCLE_LIST.indexOfFirst { it.first == currentSecs && it.second == isOpen }
+                val nextIndex = if (currentIndex != -1) (currentIndex + 1) % TIME_CYCLE_LIST.size else 0
+                val (nextSecs, nextOpen) = TIME_CYCLE_LIST[nextIndex]
+                TurnEngine.setTargetDuration(nextSecs, nextOpen)
+                QuickTurnWidgetProvider.updateAllWidgets(this)
+                smartNotificationManager?.refreshCurrentNudge()
+            }
+            ACTION_SMART_START_TURN -> {
+                wasAutoPausedByScreenOff = false
+                isNotificationTemporarilyHidden = false
+                val targetDuration = TurnEngine.targetDurationSeconds.value
+                val isTargetOpen = TurnEngine.isTargetOpenMode.value
+                TurnEngine.startTurn(targetDuration, isTargetOpen)
+                smartNotificationManager?.dismissSmartNotifications()
+                QuickTurnWidgetProvider.updateAllWidgets(this)
+            }
+            ACTION_SMART_START_RANDOM -> {
+                wasAutoPausedByScreenOff = false
+                isNotificationTemporarilyHidden = false
+                val randomDuration = SmartNotificationManager.generateRandomDurationSeconds()
+                TurnEngine.setTargetDuration(randomDuration, isOpenMode = false)
+                TurnEngine.startTurn(randomDuration, isOpenMode = false)
+                smartNotificationManager?.dismissSmartNotifications()
                 QuickTurnWidgetProvider.updateAllWidgets(this)
             }
         }
@@ -587,6 +685,7 @@ class TurnService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         isServiceRunning = false
+        unregisterScreenPowerReceiver()
         smartNotificationManager?.stopMonitoring()
         smartNotificationManager = null
         serviceScope.cancel()

@@ -170,15 +170,15 @@ fun MeowBottomNavigationCompose(
                 .pointerInput(selectedIndex) {
                     detectTapGestures(
                         onPress = {
-                            var is5SecTriggered = false
+                            var is3SecTriggered = false
                             val holdJob = coroutineScope.launch {
-                                delay(5000)
-                                is5SecTriggered = true
+                                delay(3000)
+                                is3SecTriggered = true
                                 onTabLongPress?.invoke(selectedIndex)
                             }
                             tryAwaitRelease()
                             holdJob.cancel()
-                            if (!is5SecTriggered) {
+                            if (!is3SecTriggered) {
                                 onTabSelected(selectedIndex)
                             }
                         }
@@ -221,15 +221,15 @@ fun MeowBottomNavigationCompose(
                         .pointerInput(index) {
                             detectTapGestures(
                                 onPress = {
-                                    var is5SecTriggered = false
+                                    var is3SecTriggered = false
                                     val holdJob = coroutineScope.launch {
-                                        delay(5000)
-                                        is5SecTriggered = true
+                                        delay(3000)
+                                        is3SecTriggered = true
                                         onTabLongPress?.invoke(index)
                                     }
                                     tryAwaitRelease()
                                     holdJob.cancel()
-                                    if (!is5SecTriggered) {
+                                    if (!is3SecTriggered) {
                                         onTabSelected(index)
                                     }
                                 }

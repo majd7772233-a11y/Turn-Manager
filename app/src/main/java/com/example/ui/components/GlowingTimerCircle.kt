@@ -178,6 +178,46 @@ fun GlowingTimerCircle(
                     drawDottedRadar(center, radius, progress, isOpenMode, rotationAngle, primaryColor, secondaryColor, backgroundColor)
                 }
 
+                // 13. Quantum Reactor
+                style.contains("quantum") || style.contains("reactor") || style.contains("كوانتوم") || style.contains("مفاعل") || style.contains("ذري") -> {
+                    drawQuantumReactor(center, radius, progress, rotationAngle, shimmerPhase, backgroundColor)
+                }
+
+                // 14. Emerald Dragon
+                style.contains("emerald") || style.contains("dragon") || style.contains("زمرد") || style.contains("تنين") || style.contains("أخضر") -> {
+                    drawEmeraldDragon(center, radius, progress, rotationAngle, wavePhase, backgroundColor)
+                }
+
+                // 15. Hyperdrive Warp
+                style.contains("hyperdrive") || style.contains("warp") || style.contains("سرعة") || style.contains("خارقة") || style.contains("انطلاق") -> {
+                    drawHyperdriveWarp(center, radius, progress, rotationAngle, shimmerPhase, backgroundColor)
+                }
+
+                // 16. Sunset Horizon Synthwave
+                style.contains("sunset") || style.contains("horizon") || style.contains("غروب") || style.contains("شمس") || style.contains("ريترو ويف") -> {
+                    drawSunsetHorizon(center, radius, progress, wavePhase, backgroundColor)
+                }
+
+                // 17. Electric Plasma Storm
+                style.contains("plasma") || style.contains("electric") || style.contains("صاعقة") || style.contains("برق") || style.contains("بلازما") -> {
+                    drawElectricPlasma(center, radius, progress, rotationAngle, backgroundColor)
+                }
+
+                // 18. Cherry Blossom Sakura
+                style.contains("sakura") || style.contains("blossom") || style.contains("ساكورا") || style.contains("كرز") || style.contains("زهور") -> {
+                    drawCherryBlossom(center, radius, progress, rotationAngle, backgroundColor)
+                }
+
+                // 19. Diamond Black Hole
+                style.contains("black hole") || style.contains("blackhole") || style.contains("ثقب") || style.contains("أسود") || style.contains("ماسي") -> {
+                    drawDiamondBlackHole(center, radius, progress, rotationAngle, shimmerPhase, backgroundColor)
+                }
+
+                // 20. Steampunk Clockwork
+                style.contains("steampunk") || style.contains("clockwork") || style.contains("ستيم") || style.contains("تروس") || style.contains("ساعة") -> {
+                    drawSteampunkClockwork(center, radius, progress, rotationAngle, backgroundColor)
+                }
+
                 // 12. Solid Ring / Minimalist
                 else -> {
                     drawSolidRing(center, radius, progress, primaryColor, backgroundColor)
@@ -799,6 +839,448 @@ private fun DrawScope.drawSolidRing(
         topLeft = Offset(center.x - radius, center.y - radius),
         size = Size(radius * 2, radius * 2),
         style = Stroke(width = 10.dp.toPx(), cap = StrokeCap.Square)
+    )
+}
+
+// 13. QUANTUM REACTOR
+private fun DrawScope.drawQuantumReactor(
+    center: Offset,
+    radius: Float,
+    progress: Float,
+    rotationAngle: Float,
+    shimmerPhase: Float,
+    background: Color
+) {
+    val cyan = Color(0xFF00E5FF)
+    val magenta = Color(0xFFFF0055)
+    val coreGlow = Color(0xFF7C4DFF)
+
+    // Outer faint field ring
+    drawCircle(
+        color = background,
+        radius = radius,
+        center = center,
+        style = Stroke(width = 6.dp.toPx())
+    )
+
+    // 3 orbital electron rings
+    for (i in 0 until 3) {
+        val angleOffset = i * 60f + rotationAngle * (if (i % 2 == 0) 1f else -1f)
+        val arcRadius = radius - (i * 8.dp.toPx())
+        val arcColor = if (i == 0) cyan else if (i == 1) magenta else coreGlow
+
+        drawArc(
+            brush = Brush.sweepGradient(
+                colors = listOf(arcColor, arcColor.copy(alpha = 0.2f), arcColor),
+                center = center
+            ),
+            startAngle = angleOffset,
+            sweepAngle = progress * 240f,
+            useCenter = false,
+            topLeft = Offset(center.x - arcRadius, center.y - arcRadius),
+            size = Size(arcRadius * 2, arcRadius * 2),
+            style = Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round)
+        )
+
+        // Pulsing quantum particle on the orbit
+        val particleAngle = (angleOffset + progress * 240f) * (PI / 180f)
+        val px = center.x + arcRadius * cos(particleAngle).toFloat()
+        val py = center.y + arcRadius * sin(particleAngle).toFloat()
+        drawCircle(
+            color = Color.White,
+            radius = (3.5f * shimmerPhase).dp.toPx(),
+            center = Offset(px, py)
+        )
+    }
+
+    // Core plasma glow in the center
+    drawCircle(
+        brush = Brush.radialGradient(
+            colors = listOf(cyan.copy(alpha = 0.25f * shimmerPhase), Color.Transparent),
+            center = center,
+            radius = radius * 0.7f
+        ),
+        radius = radius * 0.7f,
+        center = center
+    )
+}
+
+// 14. EMERALD DRAGON
+private fun DrawScope.drawEmeraldDragon(
+    center: Offset,
+    radius: Float,
+    progress: Float,
+    rotationAngle: Float,
+    wavePhase: Float,
+    background: Color
+) {
+    val emeraldDark = Color(0xFF004D40)
+    val emeraldBright = Color(0xFF00E676)
+    val dragonGold = Color(0xFFFFD700)
+
+    // Dragon scale background track
+    drawCircle(
+        color = background,
+        radius = radius,
+        center = center,
+        style = Stroke(width = 12.dp.toPx())
+    )
+
+    // Serpentine scales around perimeter
+    val scaleCount = 28
+    val activeScales = (progress * scaleCount).toInt()
+    for (i in 0 until scaleCount) {
+        val angle = (i * (360f / scaleCount) - 90f + rotationAngle * 0.2f) * (PI / 180f)
+        val rOffset = sin(wavePhase + i * 0.5f) * 4.dp.toPx()
+        val currR = radius + rOffset
+        val sx = center.x + currR * cos(angle).toFloat()
+        val sy = center.y + currR * sin(angle).toFloat()
+
+        val isLit = i < activeScales
+        val scaleColor = if (isLit) {
+            if (i % 3 == 0) dragonGold else emeraldBright
+        } else {
+            emeraldDark.copy(alpha = 0.3f)
+        }
+
+        drawCircle(
+            color = scaleColor,
+            radius = if (isLit) 6.dp.toPx() else 3.dp.toPx(),
+            center = Offset(sx, sy)
+        )
+    }
+
+    // Main Emerald Jade Arc
+    drawArc(
+        brush = Brush.sweepGradient(
+            colors = listOf(emeraldBright, dragonGold, emeraldBright),
+            center = center
+        ),
+        startAngle = -90f,
+        sweepAngle = progress * 360f,
+        useCenter = false,
+        topLeft = Offset(center.x - radius, center.y - radius),
+        size = Size(radius * 2, radius * 2),
+        style = Stroke(width = 7.dp.toPx(), cap = StrokeCap.Round)
+    )
+}
+
+// 15. HYPERDRIVE WARP
+private fun DrawScope.drawHyperdriveWarp(
+    center: Offset,
+    radius: Float,
+    progress: Float,
+    rotationAngle: Float,
+    shimmerPhase: Float,
+    background: Color
+) {
+    val hyperBlue = Color(0xFF00B0FF)
+    val warpWhite = Color(0xFFFFFFFF)
+    val deepSpace = Color(0xFF0D47A1)
+
+    // Base warp tunnel
+    drawCircle(
+        brush = Brush.radialGradient(
+            colors = listOf(deepSpace.copy(alpha = 0.2f), Color.Transparent),
+            center = center,
+            radius = radius
+        ),
+        radius = radius,
+        center = center
+    )
+
+    // Star streaks shooting radially outwards
+    val streakCount = 20
+    for (i in 0 until streakCount) {
+        val baseAngle = (i * (360f / streakCount) + rotationAngle * 0.5f) * (PI / 180f)
+        val innerDist = radius * 0.65f
+        val outerDist = radius + (sin(i + shimmerPhase * 5f) * 6.dp.toPx())
+
+        val x1 = center.x + innerDist * cos(baseAngle).toFloat()
+        val y1 = center.y + innerDist * sin(baseAngle).toFloat()
+        val x2 = center.x + outerDist * cos(baseAngle).toFloat()
+        val y2 = center.y + outerDist * sin(baseAngle).toFloat()
+
+        drawLine(
+            color = if (i % 2 == 0) hyperBlue.copy(alpha = 0.6f * shimmerPhase) else warpWhite.copy(alpha = 0.8f * shimmerPhase),
+            start = Offset(x1, y1),
+            end = Offset(x2, y2),
+            strokeWidth = if (i % 3 == 0) 2.5.dp.toPx() else 1.5.dp.toPx(),
+            cap = StrokeCap.Round
+        )
+    }
+
+    // Progress Warp Ring
+    drawArc(
+        brush = Brush.sweepGradient(
+            colors = listOf(hyperBlue, warpWhite, hyperBlue),
+            center = center
+        ),
+        startAngle = -90f,
+        sweepAngle = progress * 360f,
+        useCenter = false,
+        topLeft = Offset(center.x - radius, center.y - radius),
+        size = Size(radius * 2, radius * 2),
+        style = Stroke(width = 9.dp.toPx(), cap = StrokeCap.Round)
+    )
+}
+
+// 16. SUNSET HORIZON SYNTHWAVE
+private fun DrawScope.drawSunsetHorizon(
+    center: Offset,
+    radius: Float,
+    progress: Float,
+    wavePhase: Float,
+    background: Color
+) {
+    val sunYellow = Color(0xFFFFD600)
+    val sunOrange = Color(0xFFFF6D00)
+    val synthMagenta = Color(0xFFFF007F)
+    val synthPurple = Color(0xFF651FFF)
+
+    // Horizontal synthwave sun stripes
+    val stripeCount = 10
+    for (i in 0 until stripeCount) {
+        val yFraction = (i.toFloat() / stripeCount)
+        val yPos = center.y - radius + (radius * 2f * yFraction)
+        val halfW = sqrt(max(0f, radius * radius - (yPos - center.y) * (yPos - center.y)))
+
+        if (halfW > 0) {
+            drawLine(
+                brush = Brush.horizontalGradient(
+                    colors = listOf(synthPurple.copy(alpha = 0.2f), synthMagenta, sunOrange, synthMagenta, synthPurple.copy(alpha = 0.2f)),
+                    startX = center.x - halfW,
+                    endX = center.x + halfW
+                ),
+                start = Offset(center.x - halfW, yPos),
+                end = Offset(center.x + halfW, yPos),
+                strokeWidth = (2.5f + (i * 0.4f)).dp.toPx()
+            )
+        }
+    }
+
+    // Outer Progress Rim
+    drawArc(
+        brush = Brush.sweepGradient(
+            colors = listOf(sunYellow, sunOrange, synthMagenta, synthPurple, sunYellow),
+            center = center
+        ),
+        startAngle = -90f,
+        sweepAngle = progress * 360f,
+        useCenter = false,
+        topLeft = Offset(center.x - radius, center.y - radius),
+        size = Size(radius * 2, radius * 2),
+        style = Stroke(width = 8.dp.toPx(), cap = StrokeCap.Round)
+    )
+}
+
+// 17. ELECTRIC PLASMA STORM
+private fun DrawScope.drawElectricPlasma(
+    center: Offset,
+    radius: Float,
+    progress: Float,
+    rotationAngle: Float,
+    background: Color
+) {
+    val lightningBlue = Color(0xFF00E5FF)
+    val deepViolet = Color(0xFF7C4DFF)
+    val shockWhite = Color(0xFFFFFFFF)
+
+    // Outer track
+    drawCircle(
+        color = background,
+        radius = radius,
+        center = center,
+        style = Stroke(width = 8.dp.toPx())
+    )
+
+    // Jagged electric arcs
+    val segmentCount = 32
+    val activeSegments = (progress * segmentCount).toInt()
+
+    for (i in 0 until activeSegments) {
+        val a1 = (i * (360f / segmentCount) - 90f) * (PI / 180f)
+        val a2 = ((i + 1) * (360f / segmentCount) - 90f) * (PI / 180f)
+
+        // Random jitter for lightning effect
+        val jitter = sin(rotationAngle * 2f + i * 7f) * 5.dp.toPx()
+        val r1 = radius + (if (i % 2 == 0) jitter else -jitter)
+        val r2 = radius + (if (i % 2 == 1) jitter else -jitter)
+
+        val x1 = center.x + r1 * cos(a1).toFloat()
+        val y1 = center.y + r1 * sin(a1).toFloat()
+        val x2 = center.x + r2 * cos(a2).toFloat()
+        val y2 = center.y + r2 * sin(a2).toFloat()
+
+        drawLine(
+            color = if (i % 4 == 0) shockWhite else lightningBlue,
+            start = Offset(x1, y1),
+            end = Offset(x2, y2),
+            strokeWidth = 3.5.dp.toPx(),
+            cap = StrokeCap.Round
+        )
+    }
+
+    // Inner glowing aura
+    drawCircle(
+        brush = Brush.radialGradient(
+            colors = listOf(deepViolet.copy(alpha = 0.25f), Color.Transparent),
+            center = center,
+            radius = radius
+        ),
+        radius = radius,
+        center = center
+    )
+}
+
+// 18. CHERRY BLOSSOM SAKURA
+private fun DrawScope.drawCherryBlossom(
+    center: Offset,
+    radius: Float,
+    progress: Float,
+    rotationAngle: Float,
+    background: Color
+) {
+    val sakuraPink = Color(0xFFFF80AB)
+    val softRose = Color(0xFFFF4081)
+    val petalWhite = Color(0xFFFFF0F5)
+
+    // Soft zen background ring
+    drawCircle(
+        color = sakuraPink.copy(alpha = 0.15f),
+        radius = radius,
+        center = center,
+        style = Stroke(width = 8.dp.toPx())
+    )
+
+    // Floating petals around perimeter
+    val petalCount = 16
+    for (i in 0 until petalCount) {
+        val angle = (i * (360f / petalCount) + rotationAngle * 0.3f) * (PI / 180f)
+        val px = center.x + (radius + sin(rotationAngle + i) * 6.dp.toPx()) * cos(angle).toFloat()
+        val py = center.y + (radius + sin(rotationAngle + i) * 6.dp.toPx()) * sin(angle).toFloat()
+
+        drawCircle(
+            color = if (i % 2 == 0) sakuraPink else petalWhite,
+            radius = 4.dp.toPx(),
+            center = Offset(px, py)
+        )
+    }
+
+    // Smooth watercolor progress brush
+    drawArc(
+        brush = Brush.sweepGradient(
+            colors = listOf(petalWhite, sakuraPink, softRose, sakuraPink),
+            center = center
+        ),
+        startAngle = -90f,
+        sweepAngle = progress * 360f,
+        useCenter = false,
+        topLeft = Offset(center.x - radius, center.y - radius),
+        size = Size(radius * 2, radius * 2),
+        style = Stroke(width = 8.dp.toPx(), cap = StrokeCap.Round)
+    )
+}
+
+// 19. DIAMOND BLACK HOLE
+private fun DrawScope.drawDiamondBlackHole(
+    center: Offset,
+    radius: Float,
+    progress: Float,
+    rotationAngle: Float,
+    shimmerPhase: Float,
+    background: Color
+) {
+    val pureBlack = Color(0xFF121212)
+    val chromeSilver = Color(0xFFCFD8DC)
+    val diamondCyan = Color(0xFF80D8FF)
+
+    // Gravitational center void
+    drawCircle(
+        color = pureBlack,
+        radius = radius * 0.85f,
+        center = center
+    )
+
+    // Gravitational photon lensing ring
+    drawArc(
+        brush = Brush.sweepGradient(
+            colors = listOf(Color.Transparent, diamondCyan, chromeSilver, Color.White, diamondCyan, Color.Transparent),
+            center = center
+        ),
+        startAngle = rotationAngle,
+        sweepAngle = 360f,
+        useCenter = false,
+        topLeft = Offset(center.x - radius * 0.9f, center.y - radius * 0.9f),
+        size = Size(radius * 1.8f, radius * 1.8f),
+        style = Stroke(width = 3.dp.toPx())
+    )
+
+    // Outer progress accretion disk
+    drawArc(
+        brush = Brush.sweepGradient(
+            colors = listOf(chromeSilver, diamondCyan, Color.White, diamondCyan),
+            center = center
+        ),
+        startAngle = -90f,
+        sweepAngle = progress * 360f,
+        useCenter = false,
+        topLeft = Offset(center.x - radius, center.y - radius),
+        size = Size(radius * 2, radius * 2),
+        style = Stroke(width = 9.dp.toPx(), cap = StrokeCap.Round)
+    )
+}
+
+// 20. STEAMPUNK CLOCKWORK
+private fun DrawScope.drawSteampunkClockwork(
+    center: Offset,
+    radius: Float,
+    progress: Float,
+    rotationAngle: Float,
+    background: Color
+) {
+    val brassGold = Color(0xFFD4AF37)
+    val copperBronze = Color(0xFFCD7F32)
+    val darkIron = Color(0xFF3E2723)
+
+    // Clockwork gear teeth
+    val cogCount = 24
+    for (i in 0 until cogCount) {
+        val angle = (i * (360f / cogCount) + rotationAngle * 0.4f) * (PI / 180f)
+        val cx1 = center.x + (radius - 4.dp.toPx()) * cos(angle).toFloat()
+        val cy1 = center.y + (radius - 4.dp.toPx()) * sin(angle).toFloat()
+        val cx2 = center.x + (radius + 6.dp.toPx()) * cos(angle).toFloat()
+        val cy2 = center.y + (radius + 6.dp.toPx()) * sin(angle).toFloat()
+
+        drawLine(
+            color = copperBronze,
+            start = Offset(cx1, cy1),
+            end = Offset(cx2, cy2),
+            strokeWidth = 4.dp.toPx(),
+            cap = StrokeCap.Square
+        )
+    }
+
+    // Inner brass dial track
+    drawCircle(
+        color = darkIron.copy(alpha = 0.4f),
+        radius = radius - 8.dp.toPx(),
+        center = center,
+        style = Stroke(width = 4.dp.toPx())
+    )
+
+    // Progress Gear Arc
+    drawArc(
+        brush = Brush.sweepGradient(
+            colors = listOf(copperBronze, brassGold, copperBronze),
+            center = center
+        ),
+        startAngle = -90f,
+        sweepAngle = progress * 360f,
+        useCenter = false,
+        topLeft = Offset(center.x - radius, center.y - radius),
+        size = Size(radius * 2, radius * 2),
+        style = Stroke(width = 8.dp.toPx(), cap = StrokeCap.Round)
     )
 }
 

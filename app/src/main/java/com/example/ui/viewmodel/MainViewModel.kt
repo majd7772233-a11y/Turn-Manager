@@ -732,26 +732,137 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun exportToCsv(): String {
         val sb = java.lang.StringBuilder()
-        sb.append("Name,Turns Count,Total Time (Seconds),Average (Seconds)\n")
-        users.value.forEach { u ->
-            sb.append("${u.name},${u.turnsCount},${u.totalDurationSeconds},${u.averageDurationSeconds}\n")
+        // Add UTF-8 BOM so Excel opens Arabic text correctly
+        sb.append("\uFEFF")
+        
+        val sdf = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale("ar"))
+        val exportDate = sdf.format(java.util.Date())
+        val userList = users.value
+        val historyList = history.value
+        val sessionList = sessions.value
+
+        val totalTurns = userList.sumOf { it.turnsCount }
+        val totalSeconds = userList.sumOf { it.totalDurationSeconds }
+
+        sb.append("--- تقرير إحصائيات تطبيق منظم الأدوار ---\n")
+        sb.append("تاريخ التصدير,\"$exportDate\"\n")
+        sb.append("إجمالي المستخدمين,${userList.size}\n")
+        sb.append("إجمالي الأدوار المنجزة,$totalTurns\n")
+        sb.append("إجمالي الوقت الكلي (ثواني),$totalSeconds\n")
+        sb.append("إجمالي الوقت الكلي (منسق),\"${formatDurationHuman(totalSeconds)}\"\n")
+        sb.append("\n")
+
+        // Section 1: Player Table
+        sb.append("--- جدول أداء اللاعبين ---\n")
+        sb.append("المعرف,الرمز,اسم اللاعب,عدد الأدوار,إجمالي الوقت (ثواني),إجمالي الوقت المنسق,متوسط مدة الدور,النسبة المئوية من الوقت\n")
+        userList.forEach { u ->
+            val percentage = if (totalSeconds > 0) String.format(java.util.Locale.US, "%.1f%%", (u.totalDurationSeconds.toDouble() / totalSeconds.toDouble()) * 100) else "0.0%"
+            val avgFormatted = formatDurationHuman(u.averageDurationSeconds)
+            val totalFormatted = formatDurationHuman(u.totalDurationSeconds)
+            sb.append("${u.id},\"${u.avatarEmoji}\",\"${u.name}\",${u.turnsCount},${u.totalDurationSeconds},\"$totalFormatted\",\"$avgFormatted\",\"$percentage\"\n")
         }
+        sb.append("\n")
+
+        // Section 2: Sessions Table
+        sb.append("--- جدول الجلسات ---\n")
+        sb.append("معرف الجلسة,اسم الجلسة,نوع الجلسة,تاريخ الإنشاء\n")
+        sessionList.forEach { s ->
+            val sDate = sdf.format(java.util.Date(s.createdAt))
+            sb.append("${s.id},\"${s.name}\",\"${s.type}\",\"$sDate\"\n")
+        }
+        sb.append("\n")
+
+        // Section 3: History Table
+        sb.append("--- سجل الأدوار الأخيرة ---\n")
+        sb.append("معرف السجل,اسم اللاعب,نوع الإجراء,المدة المستغرقة (ثواني),المدة المنسقة,التاريخ والوقت\n")
+        historyList.take(200).forEach { h ->
+            val hDate = sdf.format(java.util.Date(h.timestamp))
+            val hFormatted = formatDurationHuman(h.elapsedSeconds)
+            val actionLabel = when (h.actionType) {
+                "FINISH" -> "إنهاء واكتمال"
+                "TIMEOUT" -> "انتهاء الوقت"
+                "CANCEL" -> "إلغاء"
+                else -> h.actionType
+            }
+            sb.append("${h.id},\"${h.userName}\",\"$actionLabel\",${h.elapsedSeconds},\"$hFormatted\",\"$hDate\"\n")
+        }
+
         return sb.toString()
     }
 
     fun exportToTxt(): String {
         val sb = java.lang.StringBuilder()
-        sb.append("تقرير تطبيق الأدوار\n")
-        sb.append("================\n\n")
-        sb.append("قائمة المستخدمين:\n")
-        users.value.forEach { u ->
-            sb.append("- ${u.avatarEmoji} ${u.name}: ${u.turnsCount} أدوار، إجمالي الوقت: ${u.totalDurationSeconds} ثانية\n")
+        val sdf = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale("ar"))
+        val exportDate = sdf.format(java.util.Date())
+        val userList = users.value
+        val historyList = history.value
+        val sessionList = sessions.value
+
+        val totalTurns = userList.sumOf { it.turnsCount }
+        val totalSeconds = userList.sumOf { it.totalDurationSeconds }
+
+        sb.append("╔══════════════════════════════════════════════════════════════╗\n")
+        sb.append("║                تقرير تطبيق منظم الأدوار الشامل                ║\n")
+        sb.append("╚══════════════════════════════════════════════════════════════╝\n\n")
+
+        sb.append("📌 معلومات عامة وملخص:\n")
+        sb.append("────────────────────────────────────────\n")
+        sb.append("• تاريخ واستخراج التقرير : $exportDate\n")
+        sb.append("• عدد المشاركين المسجلين : ${userList.size} لاعبين\n")
+        sb.append("• إجمالي عدد الأدوار      : $totalTurns دور\n")
+        sb.append("• إجمالي وقت التشغيل     : ${formatDurationHuman(totalSeconds)} ($totalSeconds ثانية)\n\n")
+
+        sb.append("👥 جدول أداء وإحصائيات المشاركين:\n")
+        sb.append("────────────────────────────────────────────────────────────────────────────\n")
+        sb.append(String.format("%-4s | %-16s | %-10s | %-14s | %-14s\n", "الرمز", "الاسم", "الأدوار", "إجمالي الوقت", "المتوسط"))
+        sb.append("────────────────────────────────────────────────────────────────────────────\n")
+        userList.forEach { u ->
+            val totalFmt = formatDurationHuman(u.totalDurationSeconds)
+            val avgFmt = formatDurationHuman(u.averageDurationSeconds)
+            sb.append(String.format("%-4s | %-16s | %-10d | %-14s | %-14s\n", u.avatarEmoji, u.name, u.turnsCount, totalFmt, avgFmt))
         }
-        sb.append("\nالجلسات النشطة:\n")
-        sessions.value.forEach { s ->
-            sb.append("- جلسة: ${s.name} (${s.type})\n")
+        sb.append("────────────────────────────────────────────────────────────────────────────\n\n")
+
+        sb.append("🎮 الجلسات المسجلة:\n")
+        sb.append("────────────────────────────────────────\n")
+        sessionList.forEach { s ->
+            val sDate = sdf.format(java.util.Date(s.createdAt))
+            sb.append("• الجلسة: ${s.name} [النوع: ${s.type}] - تاريخ الإنشاء: $sDate\n")
         }
+        sb.append("\n")
+
+        sb.append("📜 سجل آخر الأدوار الموثقة:\n")
+        sb.append("────────────────────────────────────────────────────────────────────────────\n")
+        sb.append(String.format("%-18s | %-12s | %-14s | %-20s\n", "اللاعب", "الحالة", "المدة", "التاريخ والوقت"))
+        sb.append("────────────────────────────────────────────────────────────────────────────\n")
+        historyList.take(50).forEach { h ->
+            val hDate = sdf.format(java.util.Date(h.timestamp))
+            val hFormatted = formatDurationHuman(h.elapsedSeconds)
+            val actionLabel = when (h.actionType) {
+                "FINISH" -> "مكتمل ✅"
+                "TIMEOUT" -> "انتهى الوقت ⏱️"
+                "CANCEL" -> "ملغي ❌"
+                else -> h.actionType
+            }
+            sb.append(String.format("%-18s | %-12s | %-14s | %-20s\n", h.userName, actionLabel, hFormatted, hDate))
+        }
+        sb.append("────────────────────────────────────────────────────────────────────────────\n")
+        sb.append("\nتم إنشاء هذا التقرير تلقائياً بواسطة نظام إدارة وتنظيم الأدوار.\n")
+
         return sb.toString()
+    }
+
+    private fun formatDurationHuman(totalSec: Long): String {
+        val hrs = totalSec / 3600
+        val mins = (totalSec % 3600) / 60
+        val secs = totalSec % 60
+        return when {
+            hrs > 0 && mins > 0 -> "${hrs}س ${mins}د"
+            hrs > 0 -> "${hrs} ساعة"
+            mins > 0 && secs > 0 -> "${mins}د ${secs}ث"
+            mins > 0 -> "${mins} دقيقة"
+            else -> "${secs} ثانية"
+        }
     }
 
     fun restoreFromJson(context: Context, uri: Uri): Boolean {

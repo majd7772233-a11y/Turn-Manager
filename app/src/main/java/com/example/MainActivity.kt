@@ -54,64 +54,66 @@ class MainActivity : ComponentActivity() {
             val isLoaded by viewModel.isLoaded.collectAsState()
 
             TurnManagerTheme(themeName = currentTheme) {
-                // Runtime Notification Permission check for Android 13+
-                val context = LocalContext.current
-                var hasNotificationPermission by remember {
-                    mutableStateOf(
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                            ContextCompat.checkSelfPermission(
-                                context,
-                                Manifest.permission.POST_NOTIFICATIONS
-                            ) == PackageManager.PERMISSION_GRANTED
-                        } else {
-                            true
-                        }
-                    )
-                }
-
-                val permissionLauncher = rememberLauncherForActivityResult(
-                    contract = ActivityResultContracts.RequestPermission()
-                ) { isGranted ->
-                    hasNotificationPermission = isGranted
-                }
-
-                LaunchedEffect(Unit) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !hasNotificationPermission) {
-                        permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                    }
-                    // Restore notification visibility and notify service that app is in foreground
-                    try {
-                        val foregroundIntent = Intent(context, TurnService::class.java).apply {
-                            action = TurnService.ACTION_APP_FOREGROUND
-                        }
-                        context.startService(foregroundIntent)
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
-
-                if (!isLoaded) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.background),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(
-                            color = MaterialTheme.colorScheme.primary,
-                            strokeWidth = 4.dp
-                        )
-                    }
-                } else {
-                    // Decide whether to show Onboarding wizard or the Main Hub
-                    if (users.isEmpty()) {
-                        OnboardingWizard(
-                            onComplete = { userList, sessionName, sessionType ->
-                                viewModel.setupOnboarding(userList, sessionName, sessionType)
+                com.example.ui.theme.LiquidGlassBackground {
+                    // Runtime Notification Permission check for Android 13+
+                    val context = LocalContext.current
+                    var hasNotificationPermission by remember {
+                        mutableStateOf(
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                ContextCompat.checkSelfPermission(
+                                    context,
+                                    Manifest.permission.POST_NOTIFICATIONS
+                                ) == PackageManager.PERMISSION_GRANTED
+                            } else {
+                                true
                             }
                         )
+                    }
+
+                    val permissionLauncher = rememberLauncherForActivityResult(
+                        contract = ActivityResultContracts.RequestPermission()
+                    ) { isGranted ->
+                        hasNotificationPermission = isGranted
+                    }
+
+                    LaunchedEffect(Unit) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !hasNotificationPermission) {
+                            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                        // Restore notification visibility and notify service that app is in foreground
+                        try {
+                            val foregroundIntent = Intent(context, TurnService::class.java).apply {
+                                action = TurnService.ACTION_APP_FOREGROUND
+                            }
+                            context.startService(foregroundIntent)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    }
+
+                    if (!isLoaded) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(MaterialTheme.colorScheme.background),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                color = MaterialTheme.colorScheme.primary,
+                                strokeWidth = 4.dp
+                            )
+                        }
                     } else {
-                        MainHubScreen(viewModel, circleStyle)
+                        // Decide whether to show Onboarding wizard or the Main Hub
+                        if (users.isEmpty()) {
+                            OnboardingWizard(
+                                onComplete = { userList, sessionName, sessionType ->
+                                    viewModel.setupOnboarding(userList, sessionName, sessionType)
+                                }
+                            )
+                        } else {
+                            MainHubScreen(viewModel, circleStyle)
+                        }
                     }
                 }
             }

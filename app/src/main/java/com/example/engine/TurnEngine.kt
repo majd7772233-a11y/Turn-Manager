@@ -68,6 +68,21 @@ object TurnEngine {
 
     // Initialize or Reset the Engine with a list of users and a session
     fun setupSession(session: SessionEntity, users: List<UserEntity>) {
+        val isCurrentlyActive = _state.value == TurnState.RUNNING || _state.value == TurnState.OPEN_MODE || _state.value == TurnState.PAUSED
+        if (isCurrentlyActive && currentSession?.id == session.id) {
+            // Update active users list without disrupting running turn!
+            activeUsers = users
+            val currUser = _currentUser.value
+            if (currUser != null) {
+                val updatedIndex = users.indexOfFirst { it.id == currUser.id }
+                if (updatedIndex != -1) {
+                    currentUserIndex = updatedIndex
+                    _currentUser.value = users[updatedIndex]
+                }
+            }
+            return
+        }
+
         cancelTimer()
         currentSession = session
         activeUsers = users

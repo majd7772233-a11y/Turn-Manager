@@ -133,23 +133,62 @@ private val RetroColorScheme = darkColorScheme(
     outlineVariant = Color(0xFF1C2E21)
 )
 
+// Liquid Glass (iOS 27 Super Glassmorphism & Refractive Frosted Crystals)
+private val LiquidGlassColorScheme = darkColorScheme(
+    primary = Color(0xFF64D2FF), // Vibrant crystal ice cyan
+    onPrimary = Color(0xFF002738),
+    primaryContainer = Color(0x66004D73),
+    onPrimaryContainer = Color(0xFFD0F4FF),
+    secondary = Color(0xFFBF5AF2), // Electric orchid
+    onSecondary = Color(0xFF2C004D),
+    secondaryContainer = Color(0x664A126D),
+    onSecondaryContainer = Color(0xFFF3D8FF),
+    tertiary = Color(0xFFFF375F), // Radiant rose
+    onTertiary = Color(0xFF4A0014),
+    tertiaryContainer = Color(0x666D0E29),
+    onTertiaryContainer = Color(0xFFFFD1DC),
+    background = Color(0xFF070B18), // Deep oceanic midnight glass canvas
+    onBackground = Color(0xFFF5F7FA),
+    surface = Color(0x2EFFFFFF), // 18% translucent frosted glass surface
+    onSurface = Color(0xFFFFFFFF),
+    surfaceVariant = Color(0x3DFFFFFF), // 24% translucent frosted glass variant
+    onSurfaceVariant = Color(0xFFDCE6FA),
+    surfaceContainer = Color(0x35192440),
+    surfaceContainerHigh = Color(0x4D24355A),
+    surfaceContainerHighest = Color(0x662E4473),
+    surfaceContainerLow = Color(0x2210192D),
+    surfaceContainerLowest = Color(0x18090E1C),
+    outline = Color(0x66FFFFFF), // High-specular frosted white border rim
+    outlineVariant = Color(0x4464D2FF)
+)
+
+val LocalIsLiquidGlass = androidx.compose.runtime.staticCompositionLocalOf { false }
+
 @Composable
 fun TurnManagerTheme(
     themeName: String = "Dark",
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when (themeName.uppercase()) {
+    val normalizedTheme = themeName.trim().uppercase().replace(" ", "_")
+    val isLiquidGlass = normalizedTheme == "LIQUID_GLASS"
+
+    val colorScheme = when (normalizedTheme) {
         "LIGHT" -> LightColorScheme
         "DARK" -> DarkColorScheme
         "AMOLED" -> AmoledColorScheme
         "NEON" -> NeonColorScheme
         "RETRO" -> RetroColorScheme
+        "LIQUID_GLASS" -> LiquidGlassColorScheme
         else -> DarkColorScheme // Fallback to Dark
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+    androidx.compose.runtime.CompositionLocalProvider(
+        LocalIsLiquidGlass provides isLiquidGlass
+    ) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = Typography,
+            content = content
+        )
+    }
 }
