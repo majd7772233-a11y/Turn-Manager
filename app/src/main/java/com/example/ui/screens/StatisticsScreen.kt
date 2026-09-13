@@ -25,6 +25,9 @@ import androidx.compose.ui.unit.sp
 import com.example.database.UserEntity
 import com.example.ui.viewmodel.MainViewModel
 import com.example.ui.components.verticalScrollbar
+import com.example.ui.theme.LocalIsLiquidGlass
+import com.example.ui.theme.liquidGlassCardColors
+import com.example.ui.theme.liquidGlassContainer
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -121,10 +124,12 @@ fun StatisticsScreen(
 
     val scrollState = rememberScrollState()
 
+    val isLiquidGlass = LocalIsLiquidGlass.current
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(if (isLiquidGlass) Color.Transparent else MaterialTheme.colorScheme.background)
             .pointerInput(filterMode) {
                 var totalDragX = 0f
                 detectHorizontalDragGestures(
@@ -199,8 +204,11 @@ fun StatisticsScreen(
 
         // 2. Active Period Control Bar
         Card(
-            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)),
+            modifier = Modifier
+                .fillMaxWidth()
+                .liquidGlassContainer(RoundedCornerShape(12.dp))
+                .padding(bottom = 16.dp),
+            colors = liquidGlassCardColors(defaultContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)),
             shape = RoundedCornerShape(12.dp)
         ) {
             Row(
@@ -284,15 +292,18 @@ fun StatisticsScreen(
 
         // 4. Active User Share Card
         Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            modifier = Modifier
+                .fillMaxWidth()
+                .liquidGlassContainer(RoundedCornerShape(16.dp)),
+            shape = RoundedCornerShape(16.dp),
+            colors = liquidGlassCardColors(defaultContainerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
                     "المشارك الأكثر نشاطاً في الفترة 👑",
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = if (isLiquidGlass) Color.White else MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 if (mostActiveUser != null && mostActiveUser.totalDurationSeconds > 0) {
@@ -319,8 +330,16 @@ fun StatisticsScreen(
                             }
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
-                                Text(mostActiveUser.name, fontWeight = FontWeight.Bold)
-                                Text("مشاركة الفترة: ${formatDuration(mostActiveUser.totalDurationSeconds)}", fontSize = 12.sp, color = Color.Gray)
+                                Text(
+                                    mostActiveUser.name, 
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isLiquidGlass) Color.White else MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    "مشاركة الفترة: ${formatDuration(mostActiveUser.totalDurationSeconds)}", 
+                                    fontSize = 12.sp, 
+                                    color = if (isLiquidGlass) Color(0xFFD0E0F5) else Color.Gray
+                                )
                             }
                         }
 
@@ -331,7 +350,11 @@ fun StatisticsScreen(
                         )
                     }
                 } else {
-                    Text("لا يوجد نشاط مسجل في هذه الفترة بعد.", color = Color.Gray, fontSize = 14.sp)
+                    Text(
+                        "لا يوجد نشاط مسجل في هذه الفترة بعد.", 
+                        color = if (isLiquidGlass) Color(0xFFD0E0F5) else Color.Gray, 
+                        fontSize = 14.sp
+                    )
                 }
             }
         }
@@ -340,8 +363,11 @@ fun StatisticsScreen(
 
         // 5. Custom Graphical Charts Canvas
         Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            modifier = Modifier
+                .fillMaxWidth()
+                .liquidGlassContainer(RoundedCornerShape(16.dp)),
+            shape = RoundedCornerShape(16.dp),
+            colors = liquidGlassCardColors(defaultContainerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -350,7 +376,8 @@ fun StatisticsScreen(
                     Text(
                         "توزيع أوقات المشاركة 📈",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp
+                        fontSize = 15.sp,
+                        color = if (isLiquidGlass) Color.White else MaterialTheme.colorScheme.onSurface
                     )
                 }
                 Spacer(modifier = Modifier.height(20.dp))
@@ -360,7 +387,11 @@ fun StatisticsScreen(
                         modifier = Modifier.height(150.dp).fillMaxWidth(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("أكمل أدواراً في هذه الفترة لتحديث المخطط البياني.", color = Color.Gray, fontSize = 13.sp)
+                        Text(
+                            "أكمل أدواراً في هذه الفترة لتحديث المخطط البياني.", 
+                            color = if (isLiquidGlass) Color(0xFFD0E0F5) else Color.Gray, 
+                            fontSize = 13.sp
+                        )
                     }
                 } else {
                     CustomUsersBarChart(users = filteredUsersStats)
@@ -486,9 +517,11 @@ fun StatCard(
     color: Color,
     modifier: Modifier = Modifier
 ) {
+    val isLiquidGlass = LocalIsLiquidGlass.current
+
     Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = modifier.liquidGlassContainer(RoundedCornerShape(12.dp)),
+        colors = liquidGlassCardColors(defaultContainerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(12.dp)
     ) {
         Row(
@@ -500,15 +533,25 @@ fun StatCard(
             Box(
                 modifier = Modifier
                     .size(38.dp)
-                    .background(color.copy(alpha = 0.12f), RoundedCornerShape(8.dp)),
+                    .background(color.copy(alpha = 0.16f), RoundedCornerShape(8.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
             }
             Spacer(modifier = Modifier.width(10.dp))
             Column {
-                Text(title, fontSize = 10.sp, color = Color.Gray, fontWeight = FontWeight.Medium)
-                Text(value, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                Text(
+                    title, 
+                    fontSize = 10.sp, 
+                    color = if (isLiquidGlass) Color(0xFFB0C8E8) else Color.Gray, 
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    value, 
+                    fontSize = 14.sp, 
+                    fontWeight = FontWeight.Bold, 
+                    color = if (isLiquidGlass) Color.White else MaterialTheme.colorScheme.onSurface
+                )
             }
         }
     }
@@ -524,6 +567,7 @@ fun AdvancedTurnAnalyticsCanvasCard(
     history: List<com.example.database.HistoryEntity>,
     users: List<UserEntity>
 ) {
+    val isLiquidGlass = LocalIsLiquidGlass.current
     var selectedChartType by remember { mutableStateOf(CanvasChartType.BEZIER_CURVE) }
     var scrubIndex by remember { mutableStateOf<Int?>(null) }
 
@@ -540,8 +584,10 @@ fun AdvancedTurnAnalyticsCanvasCard(
     }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = Modifier
+            .fillMaxWidth()
+            .liquidGlassContainer(RoundedCornerShape(16.dp)),
+        colors = liquidGlassCardColors(defaultContainerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -581,12 +627,12 @@ fun AdvancedTurnAnalyticsCanvasCard(
                             "الرسم البياني التحليلي المتقدم 📈",
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = if (isLiquidGlass) Color.White else MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             "محرك Canvas الرسومي مع تفاعل مباشر بالسحب",
                             fontSize = 11.sp,
-                            color = Color.Gray
+                            color = if (isLiquidGlass) Color(0xFFB0C8E8) else Color.Gray
                         )
                     }
                 }

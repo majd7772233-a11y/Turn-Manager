@@ -31,6 +31,9 @@ import com.example.database.HistoryEntity
 import com.example.database.PreferenceEntity
 import com.example.database.SessionEntity
 import com.example.database.UserEntity
+import com.example.ui.theme.LocalIsLiquidGlass
+import com.example.ui.theme.liquidGlassCardColors
+import com.example.ui.theme.liquidGlassContainer
 import com.example.ui.viewmodel.MainViewModel
 import com.example.utils.AudioEngine
 import kotlinx.coroutines.Dispatchers
@@ -308,26 +311,31 @@ fun BackupRestoreScreen(
         }
     }
 
+    val isLiquidGlass = LocalIsLiquidGlass.current
+
     Scaffold(
+        containerColor = if (isLiquidGlass) Color.Transparent else MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
                 title = {
                     Text(
                         "النسخ الاحتياطي والاستعادة 💾",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 19.sp
+                        fontSize = 19.sp,
+                        color = if (isLiquidGlass) Color.White else MaterialTheme.colorScheme.onSurface
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "رجوع"
+                            contentDescription = "رجوع",
+                            tint = if (isLiquidGlass) Color.White else MaterialTheme.colorScheme.onSurface
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = if (isLiquidGlass) Color.Transparent else MaterialTheme.colorScheme.surface
                 )
             )
         }
@@ -336,12 +344,12 @@ fun BackupRestoreScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(MaterialTheme.colorScheme.background)
+                .background(if (isLiquidGlass) Color.Transparent else MaterialTheme.colorScheme.background)
         ) {
             // Segmented Tabs Header
             PrimaryTabRow(
                 selectedTabIndex = selectedTab,
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                containerColor = if (isLiquidGlass) Color.Transparent else MaterialTheme.colorScheme.surfaceContainerHigh
             ) {
                 Tab(
                     selected = selectedTab == 0,
@@ -352,7 +360,8 @@ fun BackupRestoreScreen(
                     text = {
                         Text(
                             "إنشاء نسخة 📤",
-                            fontWeight = if (selectedTab == 0) FontWeight.Bold else FontWeight.Normal
+                            fontWeight = if (selectedTab == 0) FontWeight.Bold else FontWeight.Normal,
+                            color = if (isLiquidGlass) (if (selectedTab == 0) Color(0xFF64D2FF) else Color(0xFFD0E0F5)) else Color.Unspecified
                         )
                     }
                 )
@@ -365,7 +374,8 @@ fun BackupRestoreScreen(
                     text = {
                         Text(
                             "استعادة نسخة 📥",
-                            fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Normal
+                            fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Normal,
+                            color = if (isLiquidGlass) (if (selectedTab == 1) Color(0xFF64D2FF) else Color(0xFFD0E0F5)) else Color.Unspecified
                         )
                     }
                 )
@@ -384,9 +394,10 @@ fun BackupRestoreScreen(
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .liquidGlassContainer(RoundedCornerShape(18.dp))
                                 .padding(bottom = 16.dp),
                             shape = RoundedCornerShape(18.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                            colors = liquidGlassCardColors(defaultContainerColor = MaterialTheme.colorScheme.primaryContainer)
                         ) {
                             Column(
                                 modifier = Modifier.padding(18.dp),
@@ -396,14 +407,14 @@ fun BackupRestoreScreen(
                                     text = "تم بنجاح! 🎉",
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    color = if (isLiquidGlass) Color(0xFF64D2FF) else MaterialTheme.colorScheme.onPrimaryContainer
                                 )
                                 Spacer(modifier = Modifier.height(6.dp))
                                 Text(
                                     text = backupSuccessMessage ?: "",
                                     fontSize = 14.sp,
                                     textAlign = TextAlign.Center,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    color = if (isLiquidGlass) Color.White else MaterialTheme.colorScheme.onPrimaryContainer
                                 )
                                 Spacer(modifier = Modifier.height(12.dp))
                                 Button(
@@ -417,22 +428,24 @@ fun BackupRestoreScreen(
                     }
 
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .liquidGlassContainer(RoundedCornerShape(22.dp)),
                         shape = RoundedCornerShape(22.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
+                        colors = liquidGlassCardColors(defaultContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
                     ) {
                         Column(modifier = Modifier.padding(18.dp)) {
                             Text(
                                 text = "إعدادات وتخصيص النسخة الاحتياطية",
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = if (isLiquidGlass) Color.White else MaterialTheme.colorScheme.onSurface
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = "حدد اسم الملف والصيغة والبيانات التي تود تضمينها",
                                 fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = if (isLiquidGlass) Color(0xFFD0E0F5) else MaterialTheme.colorScheme.onSurfaceVariant
                             )
 
                             Spacer(modifier = Modifier.height(16.dp))
@@ -565,9 +578,10 @@ fun BackupRestoreScreen(
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .liquidGlassContainer(RoundedCornerShape(18.dp))
                                 .padding(bottom = 16.dp),
                             shape = RoundedCornerShape(18.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                            colors = liquidGlassCardColors(defaultContainerColor = MaterialTheme.colorScheme.primaryContainer)
                         ) {
                             Column(
                                 modifier = Modifier.padding(18.dp),
@@ -577,14 +591,14 @@ fun BackupRestoreScreen(
                                     text = "تمت الاستعادة بنجاح! 🔄",
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    color = if (isLiquidGlass) Color(0xFF64D2FF) else MaterialTheme.colorScheme.onPrimaryContainer
                                 )
                                 Spacer(modifier = Modifier.height(6.dp))
                                 Text(
                                     text = restoreSuccessMessage ?: "",
                                     fontSize = 14.sp,
                                     textAlign = TextAlign.Center,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    color = if (isLiquidGlass) Color.White else MaterialTheme.colorScheme.onPrimaryContainer
                                 )
                                 Spacer(modifier = Modifier.height(12.dp))
                                 Button(
@@ -598,9 +612,11 @@ fun BackupRestoreScreen(
                     }
 
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .liquidGlassContainer(RoundedCornerShape(22.dp)),
                         shape = RoundedCornerShape(22.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
+                        colors = liquidGlassCardColors(defaultContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
                     ) {
                         Column(
                             modifier = Modifier.padding(18.dp),
@@ -617,13 +633,13 @@ fun BackupRestoreScreen(
                                 text = "استعادة نسخة سابقة",
                                 fontSize = 17.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = if (isLiquidGlass) Color.White else MaterialTheme.colorScheme.onSurface
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = "اختر ملف النسخة الاحتياطية (.adwb أو .json) للتحقق منه واستعادته مباشرة",
                                 fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = if (isLiquidGlass) Color(0xFFD0E0F5) else MaterialTheme.colorScheme.onSurfaceVariant,
                                 textAlign = TextAlign.Center
                             )
 

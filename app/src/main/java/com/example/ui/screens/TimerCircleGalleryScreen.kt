@@ -35,6 +35,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.engine.TurnState
 import com.example.ui.components.GlowingTimerCircle
+import com.example.ui.theme.LocalIsLiquidGlass
+import com.example.ui.theme.liquidGlassCardColors
+import com.example.ui.theme.liquidGlassContainer
 import com.example.ui.viewmodel.MainViewModel
 
 data class CircleStyleInfo(
@@ -286,7 +289,10 @@ fun TimerCircleGalleryScreen(
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
 
+    val isLiquidGlass = LocalIsLiquidGlass.current
+
     Scaffold(
+        containerColor = if (isLiquidGlass) Color.Transparent else MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
                 title = {
@@ -294,22 +300,27 @@ fun TimerCircleGalleryScreen(
                         Text(
                             "معرض دوائر المؤقت الأسطورية ✨",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 17.sp
+                            fontSize = 17.sp,
+                            color = if (isLiquidGlass) Color.White else MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             "اختر النمط المناسب لمؤقت الأدوار (${CIRCLE_STYLES_CATALOG.size} أنماط متوفرة)",
                             fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = if (isLiquidGlass) Color(0xFFD0E0F5) else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "رجوع")
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = "رجوع",
+                            tint = if (isLiquidGlass) Color.White else MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
+                    containerColor = if (isLiquidGlass) Color.Transparent else MaterialTheme.colorScheme.background
                 )
             )
         }
@@ -318,7 +329,7 @@ fun TimerCircleGalleryScreen(
             state = listState,
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
+                .background(if (isLiquidGlass) Color.Transparent else MaterialTheme.colorScheme.background)
                 .padding(innerPadding),
             contentPadding = PaddingValues(bottom = 32.dp)
         ) {
@@ -327,10 +338,11 @@ fun TimerCircleGalleryScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .liquidGlassContainer(RoundedCornerShape(24.dp)),
                     shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
+                    colors = liquidGlassCardColors(
+                        defaultContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
                     ),
                     border = BorderStroke(
                         1.5.dp,
@@ -556,6 +568,7 @@ fun TimerCircleGalleryScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 5.dp)
+                        .liquidGlassContainer(RoundedCornerShape(18.dp))
                         .clickable {
                             selectedPreviewKey = item.key
                             coroutineScope.launch {
@@ -563,8 +576,8 @@ fun TimerCircleGalleryScreen(
                             }
                         },
                     shape = RoundedCornerShape(18.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (isSelectedForPreview) {
+                    colors = liquidGlassCardColors(
+                        defaultContainerColor = if (isSelectedForPreview) {
                             MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
                         } else {
                             MaterialTheme.colorScheme.surface
@@ -591,7 +604,7 @@ fun TimerCircleGalleryScreen(
                                     text = item.title,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 14.sp,
-                                    color = MaterialTheme.colorScheme.onSurface
+                                    color = if (isLiquidGlass) Color.White else MaterialTheme.colorScheme.onSurface
                                 )
                             }
 
@@ -600,7 +613,7 @@ fun TimerCircleGalleryScreen(
                             Text(
                                 text = "${item.englishName} • ${item.categoryLabel}",
                                 fontSize = 11.sp,
-                                color = MaterialTheme.colorScheme.primary,
+                                color = if (isLiquidGlass) Color(0xFF64D2FF) else MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.Medium
                             )
 
@@ -610,7 +623,7 @@ fun TimerCircleGalleryScreen(
                                 text = item.description,
                                 fontSize = 11.sp,
                                 maxLines = 2,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                                color = if (isLiquidGlass) Color(0xFFD0E0F5) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                             )
 
                             Spacer(modifier = Modifier.height(8.dp))

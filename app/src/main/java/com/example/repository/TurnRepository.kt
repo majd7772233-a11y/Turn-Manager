@@ -736,14 +736,38 @@ class TurnRepository(private val turnDao: TurnDao) {
 
     suspend fun onBackupCreated(userId: Int) {
         unlockUserAchievement(userId, "backup_master")
+        // General milestone: also ensure unlocked for all users
+        try {
+            turnDao.getAllUsers().forEach { u ->
+                unlockUserAchievement(u.id, "backup_master")
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     suspend fun onBackupRestored(userId: Int) {
         unlockUserAchievement(userId, "restore_pioneer")
+        // General milestone: also ensure unlocked for all users
+        try {
+            turnDao.getAllUsers().forEach { u ->
+                unlockUserAchievement(u.id, "restore_pioneer")
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     suspend fun onAboutAppOpened(userId: Int) {
         unlockUserAchievement(userId, "about_explorer")
+        // General milestone: also ensure unlocked for all users
+        try {
+            turnDao.getAllUsers().forEach { u ->
+                unlockUserAchievement(u.id, "about_explorer")
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     suspend fun onSpecificThemeApplied(userId: Int, themeKey: String) {

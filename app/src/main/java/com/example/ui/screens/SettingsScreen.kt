@@ -29,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.theme.LocalIsLiquidGlass
+import com.example.ui.theme.liquidGlassCardColors
 import com.example.ui.theme.liquidGlassContainer
 import com.example.ui.viewmodel.MainViewModel
 
@@ -142,48 +143,6 @@ fun SettingsScreen(
         }
 
         // ==========================================
-        // 📊 Quick Status Summary Card (نظرة سريعة)
-        // ==========================================
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .liquidGlassContainer(RoundedCornerShape(20.dp)),
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(14.dp),
-                horizontalArrangement = Arrangement.SpaceAround,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                QuickStatusChip(
-                    icon = Icons.Default.Palette,
-                    label = "الثيم",
-                    value = if (currentTheme.uppercase().contains("LIQUID")) "زجاج سائل 🧊" else currentTheme
-                )
-                QuickStatusChip(
-                    icon = Icons.Default.Timer,
-                    label = "الدائرة",
-                    value = displayStyleEmoji
-                )
-                QuickStatusChip(
-                    icon = Icons.Default.NotificationsActive,
-                    label = "الإشعارات",
-                    value = if (persistentNotificationEnabled) "نشط 🟢" else "معطل ⚪"
-                )
-                QuickStatusChip(
-                    icon = Icons.Default.VolumeUp,
-                    label = "الاهتزاز",
-                    value = if (vibrationEnabled) "مفعل 📳" else "صامت 🔕"
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(14.dp))
-
-        // ==========================================
         // 🏷️ Horizontal Category Selector (منع العصيد وتسهيل التصفح)
         // ==========================================
         Row(
@@ -230,7 +189,7 @@ fun SettingsScreen(
                     .fillMaxWidth()
                     .liquidGlassContainer(RoundedCornerShape(20.dp)),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                colors = liquidGlassCardColors()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     // Circle Timer Gallery Button
@@ -380,7 +339,7 @@ fun SettingsScreen(
                     .fillMaxWidth()
                     .liquidGlassContainer(RoundedCornerShape(20.dp)),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                colors = liquidGlassCardColors()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(
@@ -450,7 +409,7 @@ fun SettingsScreen(
                     .fillMaxWidth()
                     .liquidGlassContainer(RoundedCornerShape(20.dp)),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                colors = liquidGlassCardColors()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(
@@ -512,7 +471,7 @@ fun SettingsScreen(
                     .fillMaxWidth()
                     .liquidGlassContainer(RoundedCornerShape(20.dp)),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                colors = liquidGlassCardColors()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     // A. Duration Display Format
@@ -748,7 +707,7 @@ fun SettingsScreen(
                     .fillMaxWidth()
                     .liquidGlassContainer(RoundedCornerShape(20.dp)),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                colors = liquidGlassCardColors()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     SettingsActionRow(
@@ -810,7 +769,7 @@ fun SettingsScreen(
                     .fillMaxWidth()
                     .liquidGlassContainer(RoundedCornerShape(20.dp)),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                colors = liquidGlassCardColors()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     SettingsActionRow(
@@ -828,37 +787,6 @@ fun SettingsScreen(
         }
 
         Spacer(modifier = Modifier.height(24.dp))
-    }
-}
-
-@Composable
-private fun QuickStatusChip(
-    icon: ImageVector,
-    label: String,
-    value: String
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.padding(4.dp)
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(20.dp)
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = label,
-            fontSize = 11.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = value,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
     }
 }
 

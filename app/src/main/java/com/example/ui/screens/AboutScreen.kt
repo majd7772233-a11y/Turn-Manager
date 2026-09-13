@@ -147,7 +147,10 @@ fun AboutScreen(
         label = "backgroundPhase"
     )
 
+    val isLiquidGlass = LocalIsLiquidGlass.current
+
     Scaffold(
+        containerColor = if (isLiquidGlass) Color.Transparent else MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
                 title = {
@@ -156,19 +159,19 @@ fun AboutScreen(
                             "عن التطبيق ℹ️",
                             fontWeight = FontWeight.ExtraBold,
                             fontSize = 20.sp,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = if (isLiquidGlass) Color.White else MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Surface(
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                            color = if (isLiquidGlass) Color.White.copy(alpha = 0.12f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
                             shape = RoundedCornerShape(8.dp),
-                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
+                            border = BorderStroke(1.dp, if (isLiquidGlass) Color.White.copy(alpha = 0.3f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
                         ) {
                             Text(
                                 "PRO",
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary,
+                                color = if (isLiquidGlass) Color(0xFF64D2FF) else MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                             )
                         }
@@ -179,12 +182,12 @@ fun AboutScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "رجوع",
-                            tint = MaterialTheme.colorScheme.primary
+                            tint = if (isLiquidGlass) Color.White else MaterialTheme.colorScheme.primary
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f)
+                    containerColor = if (isLiquidGlass) Color.Transparent else MaterialTheme.colorScheme.surface.copy(alpha = 0.85f)
                 )
             )
         }
@@ -195,91 +198,113 @@ fun AboutScreen(
                 .padding(innerPadding)
         ) {
             // ==============================================================
-            // 🌟 Animated Neon Cosmos / Aurora Waves Canvas Background 🌟
+            // 🌟 Animated Canvas Background (Caustics or Cosmos) 🌟
             // ==============================================================
-            Canvas(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background)
-            ) {
-                val width = size.width
-                val height = size.height
+            if (!isLiquidGlass) {
+                Canvas(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.background)
+                ) {
+                    val width = size.width
+                    val height = size.height
 
-                // Deep ambient nebula base
-                drawRect(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            Color(0xFF080C1A),
-                            Color(0xFF0F1528),
-                            Color(0xFF080C1A)
+                    // Deep ambient nebula base
+                    drawRect(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFF080C1A),
+                                Color(0xFF0F1528),
+                                Color(0xFF080C1A)
+                            )
                         )
                     )
-                )
 
-                // Neon Plasma Orb 1: Electric Cyan
-                val p1x = width * (0.25f + 0.5f * sin(backgroundPhase * Math.PI.toFloat()))
-                val p1y = height * (0.2f + 0.3f * cos(backgroundPhase * Math.PI.toFloat()))
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            Color(0xFF00E5FF).copy(alpha = 0.28f * neonGlowAlpha),
-                            Color(0xFF00B0FF).copy(alpha = 0.12f),
-                            Color.Transparent
-                        ),
-                        center = Offset(p1x, p1y),
-                        radius = width * 0.7f
-                    ),
-                    radius = width * 0.7f,
-                    center = Offset(p1x, p1y)
-                )
-
-                // Neon Plasma Orb 2: Electric Magenta / Fuchsia
-                val p2x = width * (0.75f - 0.5f * cos(backgroundPhase * Math.PI.toFloat()))
-                val p2y = height * (0.55f + 0.35f * sin(backgroundPhase * Math.PI.toFloat()))
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            Color(0xFFFF007F).copy(alpha = 0.24f * neonGlowAlpha),
-                            Color(0xFF7C4DFF).copy(alpha = 0.10f),
-                            Color.Transparent
-                        ),
-                        center = Offset(p2x, p2y),
-                        radius = width * 0.75f
-                    ),
-                    radius = width * 0.75f,
-                    center = Offset(p2x, p2y)
-                )
-
-                // Neon Plasma Orb 3: Radiant Gold
-                val p3x = width * 0.5f
-                val p3y = height * (0.85f - 0.2f * backgroundPhase)
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            Color(0xFFFFB300).copy(alpha = 0.18f * neonGlowAlpha),
-                            Color.Transparent
-                        ),
-                        center = Offset(p3x, p3y),
-                        radius = width * 0.6f
-                    ),
-                    radius = width * 0.6f,
-                    center = Offset(p3x, p3y)
-                )
-
-                // Twinkling Starlight particles
-                val starCount = 35
-                for (i in 0 until starCount) {
-                    val sx = (i * 97 % 100) / 100f * width
-                    val sy = (i * 131 % 100) / 100f * height
-                    val starPhase = ((backgroundPhase * 3f + i * 0.2f) % 1f)
-                    val starAlpha = (sin(starPhase * Math.PI.toFloat())).coerceIn(0.1f, 0.9f)
-                    val starRadius = (i % 3 + 1.5f).dp.toPx()
-
+                    // Neon Plasma Orb 1: Electric Cyan
+                    val p1x = width * (0.25f + 0.5f * sin(backgroundPhase * Math.PI.toFloat()))
+                    val p1y = height * (0.2f + 0.3f * cos(backgroundPhase * Math.PI.toFloat()))
                     drawCircle(
-                        color = if (i % 2 == 0) Color(0xFF80D8FF).copy(alpha = starAlpha) else Color(0xFFFF80AB).copy(alpha = starAlpha),
-                        radius = starRadius,
-                        center = Offset(sx, sy)
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                Color(0xFF00E5FF).copy(alpha = 0.28f * neonGlowAlpha),
+                                Color(0xFF00B0FF).copy(alpha = 0.12f),
+                                Color.Transparent
+                            ),
+                            center = Offset(p1x, p1y),
+                            radius = width * 0.7f
+                        ),
+                        radius = width * 0.7f,
+                        center = Offset(p1x, p1y)
                     )
+
+                    // Neon Plasma Orb 2: Electric Magenta / Fuchsia
+                    val p2x = width * (0.75f - 0.5f * cos(backgroundPhase * Math.PI.toFloat()))
+                    val p2y = height * (0.55f + 0.35f * sin(backgroundPhase * Math.PI.toFloat()))
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                Color(0xFFFF007F).copy(alpha = 0.24f * neonGlowAlpha),
+                                Color(0xFF7C4DFF).copy(alpha = 0.10f),
+                                Color.Transparent
+                            ),
+                            center = Offset(p2x, p2y),
+                            radius = width * 0.75f
+                        ),
+                        radius = width * 0.75f,
+                        center = Offset(p2x, p2y)
+                    )
+
+                    // Neon Plasma Orb 3: Radiant Gold
+                    val p3x = width * 0.5f
+                    val p3y = height * (0.85f - 0.2f * backgroundPhase)
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                Color(0xFFFFB300).copy(alpha = 0.18f * neonGlowAlpha),
+                                Color.Transparent
+                            ),
+                            center = Offset(p3x, p3y),
+                            radius = width * 0.6f
+                        ),
+                        radius = width * 0.6f,
+                        center = Offset(p3x, p3y)
+                    )
+
+                    // Twinkling Starlight particles
+                    val starCount = 35
+                    for (i in 0 until starCount) {
+                        val sx = (i * 97 % 100) / 100f * width
+                        val sy = (i * 131 % 100) / 100f * height
+                        val starPhase = ((backgroundPhase * 3f + i * 0.2f) % 1f)
+                        val starAlpha = (sin(starPhase * Math.PI.toFloat())).coerceIn(0.1f, 0.9f)
+                        val starRadius = (i % 3 + 1.5f).dp.toPx()
+
+                        drawCircle(
+                            color = if (i % 2 == 0) Color(0xFF80D8FF).copy(alpha = starAlpha) else Color(0xFFFF80AB).copy(alpha = starAlpha),
+                            radius = starRadius,
+                            center = Offset(sx, sy)
+                        )
+                    }
+                }
+            } else {
+                // Subtle starlight twinkling particles overlay for Liquid Glass mode
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val width = size.width
+                    val height = size.height
+                    val starCount = 30
+                    for (i in 0 until starCount) {
+                        val sx = (i * 97 % 100) / 100f * width
+                        val sy = (i * 131 % 100) / 100f * height
+                        val starPhase = ((backgroundPhase * 3f + i * 0.2f) % 1f)
+                        val starAlpha = (sin(starPhase * Math.PI.toFloat())).coerceIn(0.08f, 0.75f)
+                        val starRadius = (i % 3 + 1.2f).dp.toPx()
+
+                        drawCircle(
+                            color = if (i % 2 == 0) Color(0xFF80D8FF).copy(alpha = starAlpha) else Color(0xFFFF80AB).copy(alpha = starAlpha),
+                            radius = starRadius,
+                            center = Offset(sx, sy)
+                        )
+                    }
                 }
             }
 
@@ -413,7 +438,7 @@ fun AboutScreen(
 
                         // Shimmering Neon Pro Badge
                         Surface(
-                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
+                            color = if (isLiquidGlass) Color.White.copy(alpha = 0.10f) else MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
                             shape = RoundedCornerShape(16.dp),
                             border = BorderStroke(
                                 1.5.dp,
@@ -425,7 +450,7 @@ fun AboutScreen(
                                     )
                                 )
                             ),
-                            shadowElevation = 8.dp
+                            shadowElevation = if (isLiquidGlass) 0.dp else 8.dp
                         ) {
                             Row(
                                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
@@ -435,7 +460,7 @@ fun AboutScreen(
                                     text = "الإصدار 2.5.0 • Pro Ultra Edition 💎",
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
+                                    color = if (isLiquidGlass) Color(0xFF64D2FF) else MaterialTheme.colorScheme.primary
                                 )
                             }
                         }
@@ -445,7 +470,7 @@ fun AboutScreen(
                         Text(
                             text = "تطبيق فائق الدقة والذكاء لتنظيم الأدوار وتوزيع الوقت بعدالة مطلقة مع تنبيهات ذكية، عجلة قرعة واقعية، ومعرض دائري أسطوري.",
                             fontSize = 13.5.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = if (isLiquidGlass) Color(0xFFD6E4F0) else MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center,
                             lineHeight = 22.sp,
                             modifier = Modifier.padding(horizontal = 16.dp)
@@ -461,13 +486,13 @@ fun AboutScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .shadow(16.dp, RoundedCornerShape(24.dp), ambientColor = Color(0xFF00E5FF).copy(alpha = 0.2f))
+                        .shadow(if (isLiquidGlass) 0.dp else 16.dp, RoundedCornerShape(24.dp), ambientColor = Color(0xFF00E5FF).copy(alpha = 0.2f))
                         .liquidGlassContainer(RoundedCornerShape(24.dp)),
                     shape = RoundedCornerShape(24.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.82f)
+                        containerColor = if (isLiquidGlass) Color.Transparent else MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.82f)
                     ),
-                    border = BorderStroke(
+                    border = if (isLiquidGlass) null else BorderStroke(
                         1.2.dp,
                         Brush.linearGradient(
                             listOf(
@@ -498,10 +523,10 @@ fun AboutScreen(
                             }
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = "أبرز مميزات التطبيق الأسطورية",
-                                fontSize = 16.sp,
+                                text = "دليل مميزات التطبيق الشاملة والأسطورية",
+                                fontSize = 17.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = if (isLiquidGlass) Color.White else MaterialTheme.colorScheme.onSurface
                             )
                         }
 
@@ -510,38 +535,74 @@ fun AboutScreen(
                         NeonFeatureItem(
                             icon = Icons.Default.Timer,
                             glowColor = Color(0xFF00E5FF),
-                            title = "نظام مؤقتات متعدد الأدوار و20 نمط دائري",
-                            desc = "إدارة الأدوار بالوقت التنازلي والمفتوح مع أشكال دائرية ساحرة وتنبيهات صوتية واهتزازات غامرة."
+                            title = "نظام مؤقتات متعدد الأدوار والأنماط",
+                            desc = "إدارة الأدوار بالوقت التنازلي التنافسي أو المفتوح التصاعدي، مع إمكانية التبديل الفوري، والتخطي، وتمديد الوقت بنقرة زر واحدة."
+                        )
+                        NeonFeatureItem(
+                            icon = Icons.Default.AutoMode,
+                            glowColor = Color(0xFF64D2FF),
+                            title = "معرض أشكال الدوائر الساحرة (20+ شكلاً أسطورياً)",
+                            desc = "تشكيلة خيالية من الدوائر التفاعلية (Glow, Neon Rings, Cosmic Vortex, Dual Pulse, Matrix, Flame وغيرها) مع أنيميشن فيزيائي حيوي."
                         )
                         NeonFeatureItem(
                             icon = Icons.Default.Casino,
                             glowColor = Color(0xFFFF5252),
-                            title = "عجلة القرعة العشوائية والتدوير بالأصبع",
-                            desc = "تدوير واقعي بالأصبع 3 مرات أو بزر التشغيل لاختيار اللاعب والوقت العشوائي بعدالة تامة."
+                            title = "عجلة القرعة العشوائية بالفيزياء الحقيقية",
+                            desc = "تدوير واقعي وسلس بالأصبع يعتمد على قوة وسرعة السحب مع حد 3 سحبات متتالية، ونظام اختيار عشوائي ذكي للاعبين وأوقات الأدوار بعدالة مطلقة."
                         )
                         NeonFeatureItem(
                             icon = Icons.Default.EmojiEvents,
                             glowColor = Color(0xFFFFB300),
-                            title = "نظام إنجازات وتحديات ضخم (85+ إنجاز)",
-                            desc = "تتبع مسيرتك وإنجازاتك اليومية والسلاسل المتتالية بشارات فخمة ومحفزة."
+                            title = "نظام إنجازات وتحديات ملكي (88 إنجازاً فريداً)",
+                            desc = "مستويات وتحديات فردية وجماعية مع حساب السلاسل اليومية وشارات برونزية وفضية وذهبية وألماسية تمنح لكل لاعب بحسب تفاعله."
                         )
                         NeonFeatureItem(
                             icon = Icons.Default.NotificationsActive,
                             glowColor = Color(0xFF00E676),
-                            title = "إشعارات تفاعلية وذكاء تنبيهي مخصص",
-                            desc = "تحكم مباشر بالدور من شريط الإشعارات مع تنبيهات فكاهية ذكية ومزامنة الشاشة."
+                            title = "إشعارات تفاعلية متقدمة ومزامنة فورية 100%",
+                            desc = "تحكم كامل ببدء وإنهاء وتبديل الأدوار وتمديد الوقت مباشرة من شريط الإشعارات والويدجت بدون الحاجة لفتح التطبيق، مع مزامنة آنية مثالية."
+                        )
+                        NeonFeatureItem(
+                            icon = Icons.Default.Widgets,
+                            glowColor = Color(0xFF00B0FF),
+                            title = "ويدجت الشاشة الرئيسية التفاعلي المباشر",
+                            desc = "متابعة اسم اللاعب الحالي، عداد الوقت المتبقي، وأزرار التحكم السريعة مباشرة من شاشة هاتفك الرئيسية في أي وقت."
+                        )
+                        NeonFeatureItem(
+                            icon = Icons.Default.BarChart,
+                            glowColor = Color(0xFFFF4081),
+                            title = "لوحة إحصائيات تحليلية ورسوم بيانية ذكية",
+                            desc = "رسوم بيانية تفاعلية متطورة توضح نسب استخدام الأدوار، وتوزيع الوقت بين اللاعبين، مع مقارنات دقيقة، ورسوم دائرية وأعمدة تفاعلية."
+                        )
+                        NeonFeatureItem(
+                            icon = Icons.Default.History,
+                            glowColor = Color(0xFFFFD54F),
+                            title = "سجل الأدوار الشامل والأرشيف السري للمحذوفات",
+                            desc = "سجل دقيق ومفصل لكل ثانية قضاها كل مستخدم، مع إمكانية البحث والفرز، وسلة محذوفات سرية لاستعادة الأدوار المحذوفة أو حذفها نهائياً."
+                        )
+                        NeonFeatureItem(
+                            icon = Icons.Default.Group,
+                            glowColor = Color(0xFF69F0AE),
+                            title = "إدارة جلسات متعددة ومجموعات مخصصة",
+                            desc = "إنشاء وتنظيم جلسات منفصلة (ألعاب، دراسة، عمل، اجتماعات) مع تخصيص الألوان والصور الرمزية لكل مستخدم وحفظ سجلاته مستقلاً."
                         )
                         NeonFeatureItem(
                             icon = Icons.Default.Backup,
                             glowColor = Color(0xFF9C27B0),
                             title = "نسخ احتياطي مشفر وتصدير CSV و TXT",
-                            desc = "حفظ كامل للسجلات والإنجازات والإعدادات مع تصدير تقارير Excel متوافقة بالكامل."
+                            desc = "حفظ كامل وآمن للبيانات والسجلات والإنجازات في ملفات JSON مشفرة، مع تصدير تقارير الجلسات بصيغة CSV و TXT متوافقة كلياً مع Excel."
                         )
                         NeonFeatureItem(
-                            icon = Icons.Default.AutoAwesome,
-                            glowColor = Color(0xFF64D2FF),
-                            title = "ثيم Liquid Glass (iOS 27 Glassmorphism)",
-                            desc = "تجربة بصرية فائقة الزجاجية والانعكاسات الشفافة والمؤثرات الضوئية الخاطفة للأنظار."
+                            icon = Icons.Default.Palette,
+                            glowColor = Color(0xFFE040FB),
+                            title = "ثيمات حصرية متقدمة و Liquid Glass (iOS 27)",
+                            desc = "مظهر زجاجي فائق الفخامة مع تأثيرات التمويه والشفافية والانعكاسات الكريستالية، بالإضافة إلى ثيمات Neon و Super AMOLED و Retro."
+                        )
+                        NeonFeatureItem(
+                            icon = Icons.Default.VolumeUp,
+                            glowColor = Color(0xFF00E5FF),
+                            title = "حزم أصوات تفاعلية واهتزازات لمسية هابتك",
+                            desc = "مؤثرات صوتية محفزة للأدوار، تكات للمؤقت، نغمات مخصصة لكل لاعب، وردود فعل اهتزازية واقعية لكل إجراء."
                         )
                     }
                 }
@@ -554,13 +615,13 @@ fun AboutScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .shadow(20.dp, RoundedCornerShape(26.dp), spotColor = Color(0xFF651FFF))
+                        .shadow(if (isLiquidGlass) 0.dp else 20.dp, RoundedCornerShape(26.dp), spotColor = Color(0xFF651FFF))
                         .liquidGlassContainer(RoundedCornerShape(26.dp)),
                     shape = RoundedCornerShape(26.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f)
+                        containerColor = if (isLiquidGlass) Color.Transparent else MaterialTheme.colorScheme.surface.copy(alpha = 0.88f)
                     ),
-                    border = BorderStroke(
+                    border = if (isLiquidGlass) null else BorderStroke(
                         1.5.dp,
                         Brush.sweepGradient(
                             listOf(
@@ -577,13 +638,22 @@ fun AboutScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(
-                                Brush.linearGradient(
-                                    colors = listOf(
-                                        Color(0xFF00E5FF).copy(alpha = 0.08f),
-                                        Color(0xFF651FFF).copy(alpha = 0.12f),
-                                        Color(0xFFFF007F).copy(alpha = 0.06f)
+                                if (isLiquidGlass) {
+                                    Brush.verticalGradient(
+                                        listOf(
+                                            Color.White.copy(alpha = 0.04f),
+                                            Color.Transparent
+                                        )
                                     )
-                                )
+                                } else {
+                                    Brush.linearGradient(
+                                        colors = listOf(
+                                            Color(0xFF00E5FF).copy(alpha = 0.08f),
+                                            Color(0xFF651FFF).copy(alpha = 0.12f),
+                                            Color(0xFFFF007F).copy(alpha = 0.06f)
+                                        )
+                                    )
+                                }
                             )
                             .padding(22.dp)
                     ) {
@@ -692,6 +762,8 @@ private fun NeonFeatureItem(
     title: String,
     desc: String
 ) {
+    val isLiquidGlass = LocalIsLiquidGlass.current
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -721,13 +793,13 @@ private fun NeonFeatureItem(
                 text = title,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = if (isLiquidGlass) Color.White else MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = desc,
                 fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = if (isLiquidGlass) Color(0xFFD6E4F0) else MaterialTheme.colorScheme.onSurfaceVariant,
                 lineHeight = 17.sp
             )
         }
@@ -745,6 +817,8 @@ private fun NeonContactActionCard(
     onClick: () -> Unit,
     onLongClick: () -> Unit
 ) {
+    val isLiquidGlass = LocalIsLiquidGlass.current
+
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -754,8 +828,8 @@ private fun NeonContactActionCard(
                 onLongClick = onLongClick
             ),
         shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.75f),
-        border = BorderStroke(1.dp, iconBgColor.copy(alpha = 0.35f))
+        color = if (isLiquidGlass) Color.White.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.75f),
+        border = BorderStroke(1.dp, if (isLiquidGlass) Color.White.copy(alpha = 0.22f) else iconBgColor.copy(alpha = 0.35f))
     ) {
         Row(
             modifier = Modifier
@@ -791,13 +865,13 @@ private fun NeonContactActionCard(
                         text = label,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = if (isLiquidGlass) Color(0xFFB8CCE4) else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
                         text = value,
                         fontSize = 14.5.sp,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = if (isLiquidGlass) Color.White else MaterialTheme.colorScheme.onSurface
                     )
                 }
             }

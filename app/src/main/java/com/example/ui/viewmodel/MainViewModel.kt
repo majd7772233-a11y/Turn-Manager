@@ -380,15 +380,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun getActiveOrSelectedUserId(): Int {
+        return TurnEngine.currentUser.value?.id
+            ?: _selectedAchievementUserId.value
+            ?: users.value.firstOrNull()?.id
+            ?: 1
+    }
+
     // Preference customization
     fun updateTheme(themeName: String) {
         _currentTheme.value = themeName
         viewModelScope.launch {
             repository.savePreference("pref_theme", themeName)
-            val user = TurnEngine.currentUser.value
-            if (user != null) {
-                repository.onThemeChanged(user.id)
-            }
+            val uid = getActiveOrSelectedUserId()
+            repository.onThemeChanged(uid)
         }
     }
 
@@ -396,10 +401,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _circleStyle.value = styleName
         viewModelScope.launch {
             repository.savePreference("pref_circle_style", styleName)
-            val user = TurnEngine.currentUser.value
-            if (user != null) {
-                repository.onCircleStyleChanged(user.id)
-            }
+            val uid = getActiveOrSelectedUserId()
+            repository.onCircleStyleChanged(uid)
         }
     }
 
@@ -669,28 +672,28 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun onBackupCreated() {
         viewModelScope.launch {
-            val uid = users.value.firstOrNull()?.id ?: 1
+            val uid = getActiveOrSelectedUserId()
             repository.onBackupCreated(uid)
         }
     }
 
     fun onBackupRestored() {
         viewModelScope.launch {
-            val uid = users.value.firstOrNull()?.id ?: 1
+            val uid = getActiveOrSelectedUserId()
             repository.onBackupRestored(uid)
         }
     }
 
     fun onAboutAppOpened() {
         viewModelScope.launch {
-            val uid = users.value.firstOrNull()?.id ?: 1
+            val uid = getActiveOrSelectedUserId()
             repository.onAboutAppOpened(uid)
         }
     }
 
     fun onSmartNotificationUsed() {
         viewModelScope.launch {
-            val uid = users.value.firstOrNull()?.id ?: 1
+            val uid = getActiveOrSelectedUserId()
             repository.onSmartNotificationUsed(uid)
         }
     }

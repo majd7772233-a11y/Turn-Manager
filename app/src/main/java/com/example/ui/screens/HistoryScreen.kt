@@ -27,6 +27,9 @@ import androidx.compose.ui.unit.sp
 import com.example.database.HistoryEntity
 import com.example.ui.viewmodel.MainViewModel
 import com.example.ui.components.verticalScrollbar
+import com.example.ui.theme.LocalIsLiquidGlass
+import com.example.ui.theme.liquidGlassCardColors
+import com.example.ui.theme.liquidGlassContainer
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -75,10 +78,12 @@ fun HistoryScreen(
         }
     }
 
+    val isLiquidGlass = LocalIsLiquidGlass.current
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(if (isLiquidGlass) Color.Transparent else MaterialTheme.colorScheme.background)
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -326,12 +331,13 @@ fun TimelineItem(
         Card(
             modifier = Modifier
                 .weight(1f)
+                .liquidGlassContainer(RoundedCornerShape(14.dp))
                 .combinedClickable(
                     onLongClick = onLongClick,
                     onClick = {}
                 ),
             shape = RoundedCornerShape(14.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            colors = liquidGlassCardColors(),
             elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
         ) {
             Row(

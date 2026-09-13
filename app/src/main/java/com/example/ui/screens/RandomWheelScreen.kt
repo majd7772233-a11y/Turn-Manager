@@ -2,6 +2,7 @@ package com.example.ui.screens
 
 import android.graphics.Paint
 import android.graphics.Typeface
+import android.os.SystemClock
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*
@@ -39,6 +40,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.database.UserEntity
 import com.example.engine.TurnEngine
+import com.example.ui.theme.LocalIsLiquidGlass
+import com.example.ui.theme.liquidGlassCardColors
 import com.example.ui.theme.liquidGlassContainer
 import com.example.ui.viewmodel.MainViewModel
 import com.example.utils.AudioEngine
@@ -60,24 +63,25 @@ enum class WheelMode {
 
 data class WheelTimeSlice(
     val seconds: Long,
-    val label: String,
+    val shortLabel: String,
+    val fullLabel: String,
     val emoji: String,
     val color: Color
 )
 
 val WHEEL_TIME_SLICES = listOf(
-    WheelTimeSlice(1L, "1 ثانية", "⚡", Color(0xFFFF5252)),
-    WheelTimeSlice(60L, "1 دقيقة", "⏱️", Color(0xFFFF7A00)),
-    WheelTimeSlice(120L, "2 دقيقة", "⏳", Color(0xFFFFB300)),
-    WheelTimeSlice(300L, "5 دقائق", "🔥", Color(0xFF4CAF50)),
-    WheelTimeSlice(600L, "10 دقائق", "🎯", Color(0xFF00BCD4)),
-    WheelTimeSlice(900L, "15 دقيقة", "🚀", Color(0xFF2196F3)),
-    WheelTimeSlice(1200L, "20 دقيقة", "💎", Color(0xFF3F51B5)),
-    WheelTimeSlice(1800L, "30 دقيقة", "⭐", Color(0xFF9C27B0)),
-    WheelTimeSlice(2700L, "45 دقيقة", "🏆", Color(0xFFE91E63)),
-    WheelTimeSlice(3600L, "60 دقيقة (ساعة)", "👑", Color(0xFF00E676)),
-    WheelTimeSlice(4500L, "75 دقيقة (ساعة وربع)", "🌌", Color(0xFF7C4DFF)),
-    WheelTimeSlice(5400L, "90 دقيقة (ساعة ونصف)", "🪐", Color(0xFF00E5FF))
+    WheelTimeSlice(1L, "1ث", "1 ثانية", "⚡", Color(0xFFFF5252)),
+    WheelTimeSlice(60L, "1د", "1 دقيقة", "⏱️", Color(0xFFFF7A00)),
+    WheelTimeSlice(120L, "2د", "2 دقيقة", "⏳", Color(0xFFFFB300)),
+    WheelTimeSlice(300L, "5د", "5 دقائق", "🔥", Color(0xFF4CAF50)),
+    WheelTimeSlice(600L, "10د", "10 دقائق", "🎯", Color(0xFF00BCD4)),
+    WheelTimeSlice(900L, "15د", "15 دقيقة", "🚀", Color(0xFF2196F3)),
+    WheelTimeSlice(1200L, "20د", "20 دقيقة", "💎", Color(0xFF3F51B5)),
+    WheelTimeSlice(1800L, "30د", "30 دقيقة", "⭐", Color(0xFF9C27B0)),
+    WheelTimeSlice(2700L, "45د", "45 دقيقة", "🏆", Color(0xFFE91E63)),
+    WheelTimeSlice(3600L, "1س", "ساعة واحدة (60د)", "👑", Color(0xFF00E676)),
+    WheelTimeSlice(4500L, "1.25س", "ساعة وربع (75د)", "🌌", Color(0xFF7C4DFF)),
+    WheelTimeSlice(5400L, "1.5س", "ساعة ونصف (90د)", "🪐", Color(0xFF00E5FF))
 )
 
 /**
@@ -99,7 +103,7 @@ fun RandomWheelScreen(
     val rotationAngle = remember { Animatable(0f) }
     var isSpinning by remember { mutableStateOf(false) }
 
-    // Finger Swipe Tracking
+    // Finger Swipe Tracking (1, 2, 3 swipes)
     var fingerSwipeCount by remember { mutableIntStateOf(0) }
     val maxFingerSwipes = 3
 
@@ -163,31 +167,44 @@ fun RandomWheelScreen(
         }
     }
 
-    fun launchFullSpin(sliceCount: Int, onFinish: (Int) -> Unit) {
+    fun launchFullSpinWithMomentum(
+        sliceCount: Int,
+        initialVelocity: Float = 1600f,
+        direction: Float = 1f,
+        onFinish: (Int) -> Unit
+    ) {
         if (isSpinning || sliceCount <= 0) return
 
         isSpinning = true
         showCelebrationDialog = false
         timeWinnerBanner = null
-        fingerSwipeCount = 0
 
         scope.launch {
             val sliceAngle = 360f / sliceCount.toFloat()
             val winnerIndex = Random.nextInt(0, sliceCount)
 
-            val randomOffsetWithinSlice = sliceAngle * (0.20f + Random.nextFloat() * 0.60f)
+            val randomOffsetWithinSlice = sliceAngle * (0.22f + Random.nextFloat() * 0.56f)
             val targetSliceAngle = (winnerIndex * sliceAngle) + randomOffsetWithinSlice
 
             val requiredFinalAngleInWheel = (270f - targetSliceAngle + 360f) % 360f
-            val fullRotations = (9..14).random() * 360f
-            val currentMod = (rotationAngle.value % 360f + 360f) % 360f
-            val deltaAngle = ((requiredFinalAngleInWheel - currentMod) % 360f + 360f) % 360f
-            val targetRotation = rotationAngle.value + fullRotations + deltaAngle
+            val speedBonus = (kotlin.math.abs(initialVelocity) / 550f).toInt().coerceIn(1, 5)
+            val fullRotations = ((7 + speedBonus)..(10 + speedBonus)).random() * 360f * direction
+
+            val currentAngle = rotationAngle.value
+            val currentMod = ((currentAngle % 360f) + 360f) % 360f
+
+            val deltaAngle = if (direction >= 0f) {
+                ((requiredFinalAngleInWheel - currentMod) % 360f + 360f) % 360f
+            } else {
+                -(((currentMod - requiredFinalAngleInWheel) % 360f + 360f) % 360f)
+            }
+
+            val targetRotation = currentAngle + fullRotations + deltaAngle
 
             // Ticking sound during spin
             val tickJob = launch {
-                var delayMs = 45L
-                while (isSpinning && delayMs < 360L) {
+                var delayMs = 40L
+                while (isSpinning && delayMs < 380L) {
                     AudioEngine.playSound("TICK")
                     delay(delayMs)
                     delayMs = (delayMs * 1.13f).toLong()
@@ -197,17 +214,17 @@ fun RandomWheelScreen(
             rotationAngle.animateTo(
                 targetValue = targetRotation,
                 animationSpec = tween(
-                    durationMillis = 4800,
-                    easing = CubicBezierEasing(0.15f, 0.85f, 0.20f, 1.0f)
+                    durationMillis = 4400,
+                    easing = CubicBezierEasing(0.12f, 0.82f, 0.18f, 1.0f)
                 )
             )
             tickJob.cancel()
 
-            // Calculate final index from angle
             val finalStoppedAngle = ((270f - (rotationAngle.value % 360f)) % 360f + 360f) % 360f
             val calculatedIndex = ((finalStoppedAngle / sliceAngle).toInt()).coerceIn(0, sliceCount - 1)
 
             isSpinning = false
+            fingerSwipeCount = 0
             onFinish(calculatedIndex)
         }
     }
@@ -219,7 +236,7 @@ fun RandomWheelScreen(
         if (activeUserId != null) {
             viewModel.onRandomWheelSpun(activeUserId)
         }
-        launchFullSpin(users.size) { calculatedWinnerIndex ->
+        launchFullSpinWithMomentum(users.size, initialVelocity = 1800f, direction = 1f) { calculatedWinnerIndex ->
             val winner = users[calculatedWinnerIndex]
             selectedWinner = winner
             showCelebrationDialog = true
@@ -231,17 +248,16 @@ fun RandomWheelScreen(
     // Spin for Time Durations
     fun spinTimeWheel() {
         val winner = selectedWinner ?: users.firstOrNull() ?: return
-        launchFullSpin(WHEEL_TIME_SLICES.size) { calculatedIndex ->
+        launchFullSpinWithMomentum(WHEEL_TIME_SLICES.size, initialVelocity = 1800f, direction = 1f) { calculatedIndex ->
             val timeSlice = WHEEL_TIME_SLICES[calculatedIndex]
             selectedTimeSlice = timeSlice
             AudioEngine.playSound("TURN_FINISHED")
             triggerConfetti()
 
-            timeWinnerBanner = "تم اختيار وقت: ${timeSlice.label} (${timeSlice.emoji})!"
+            timeWinnerBanner = "تم اختيار وقت: ${timeSlice.fullLabel} (${timeSlice.emoji})!"
 
             scope.launch {
                 delay(1200)
-                // Start turn immediately and navigate to MainHub
                 TurnEngine.selectUser(winner.id)
                 TurnEngine.setTargetDuration(timeSlice.seconds, isOpenMode = false)
                 TurnEngine.startTurn(timeSlice.seconds, isOpenMode = false)
@@ -251,7 +267,10 @@ fun RandomWheelScreen(
         }
     }
 
+    val isLiquidGlass = LocalIsLiquidGlass.current
+
     Scaffold(
+        containerColor = if (isLiquidGlass) Color.Transparent else MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
                 title = {
@@ -259,7 +278,8 @@ fun RandomWheelScreen(
                         Text(
                             text = if (wheelMode == WheelMode.USERS) "عجلة اختيار اللاعب 🎡" else "عجلة الوقت العشوائي ⏱️",
                             fontWeight = FontWeight.ExtraBold,
-                            fontSize = 19.sp
+                            fontSize = 19.sp,
+                            color = if (isLiquidGlass) Color.White else MaterialTheme.colorScheme.onSurface
                         )
                     }
                 },
@@ -275,12 +295,12 @@ fun RandomWheelScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "رجوع",
-                            tint = MaterialTheme.colorScheme.primary
+                            tint = if (isLiquidGlass) Color.White else MaterialTheme.colorScheme.primary
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
+                    containerColor = if (isLiquidGlass) Color.Transparent else MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
                 )
             )
         }
@@ -289,13 +309,19 @@ fun RandomWheelScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.background,
-                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+                .then(
+                    if (isLiquidGlass) {
+                        Modifier.background(Color.Transparent)
+                    } else {
+                        Modifier.background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.background,
+                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+                                )
+                            )
                         )
-                    )
+                    }
                 )
         ) {
             val screenWidth = maxWidth
@@ -428,47 +454,128 @@ fun RandomWheelScreen(
                                     if (isSpinning) return@pointerInput
 
                                     var lastTouchAngle = 0f
+                                    var lastTime = 0L
+                                    var velocity = 0f
+                                    var lastTickAngle = rotationAngle.value
+                                    var dragJob: kotlinx.coroutines.Job? = null
 
                                     detectDragGestures(
                                         onDragStart = { offset ->
+                                            dragJob?.cancel()
+                                            scope.launch { rotationAngle.stop() }
                                             val center = Offset(size.width / 2f, size.height / 2f)
                                             lastTouchAngle = Math.toDegrees(
-                                                atan2(
-                                                    (offset.y - center.y).toDouble(),
-                                                    (offset.x - center.x).toDouble()
-                                                )
+                                                atan2((offset.y - center.y).toDouble(), (offset.x - center.x).toDouble())
                                             ).toFloat()
+                                            lastTime = SystemClock.uptimeMillis()
+                                            velocity = 0f
+                                            lastTickAngle = rotationAngle.value
                                         },
-                                        onDrag = { change, dragAmount ->
+                                        onDrag = { change, _ ->
                                             change.consume()
                                             val center = Offset(size.width / 2f, size.height / 2f)
                                             val currentTouchAngle = Math.toDegrees(
-                                                atan2(
-                                                    (change.position.y - center.y).toDouble(),
-                                                    (change.position.x - center.x).toDouble()
-                                                )
+                                                atan2((change.position.y - center.y).toDouble(), (change.position.x - center.x).toDouble())
                                             ).toFloat()
+                                            val now = SystemClock.uptimeMillis()
 
-                                            var angleDelta = currentTouchAngle - lastTouchAngle
-                                            if (angleDelta > 180f) angleDelta -= 360f
-                                            if (angleDelta < -180f) angleDelta += 360f
+                                            var delta = currentTouchAngle - lastTouchAngle
+                                            if (delta > 180f) delta -= 360f
+                                            if (delta < -180f) delta += 360f
+
+                                            val dt = (now - lastTime).coerceAtLeast(1L)
+                                            val instantVelocity = (delta / dt.toFloat()) * 1000f
+                                            velocity = 0.70f * instantVelocity + 0.30f * velocity
 
                                             lastTouchAngle = currentTouchAngle
+                                            lastTime = now
 
-                                            scope.launch {
-                                                rotationAngle.snapTo(rotationAngle.value + angleDelta)
+                                            val newAngle = rotationAngle.value + delta
+                                            dragJob?.cancel()
+                                            dragJob = scope.launch {
+                                                rotationAngle.snapTo(newAngle)
+                                            }
+
+                                            val sliceCount = if (wheelMode == WheelMode.USERS) users.size else WHEEL_TIME_SLICES.size
+                                            if (sliceCount > 0) {
+                                                val sliceAngle = 360f / sliceCount.toFloat()
+                                                if (kotlin.math.abs(newAngle - lastTickAngle) >= sliceAngle * 0.7f) {
+                                                    AudioEngine.playSound("TICK")
+                                                    lastTickAngle = newAngle
+                                                }
                                             }
                                         },
                                         onDragEnd = {
-                                            fingerSwipeCount++
-                                            AudioEngine.playSound("TICK")
+                                            dragJob?.cancel()
+                                            val sliceCount = if (wheelMode == WheelMode.USERS) users.size else WHEEL_TIME_SLICES.size
+                                            if (sliceCount <= 0 || isSpinning) return@detectDragGestures
 
-                                            if (fingerSwipeCount >= maxFingerSwipes) {
-                                                // Trigger the mega spin after 3 swipes!
+                                            val nextSwipeCount = fingerSwipeCount + 1
+                                            fingerSwipeCount = nextSwipeCount
+
+                                            if (nextSwipeCount >= maxFingerSwipes) {
+                                                // 3rd swipe completed! Grand finale spin with momentum!
+                                                val direction = if (velocity < -50f) -1f else 1f
                                                 if (wheelMode == WheelMode.USERS) {
-                                                    spinUserWheel()
+                                                    val activeUserId = users.firstOrNull()?.id
+                                                    if (activeUserId != null) {
+                                                        viewModel.onRandomWheelSpun(activeUserId)
+                                                    }
+                                                    launchFullSpinWithMomentum(sliceCount, velocity, direction) { calculatedWinnerIndex ->
+                                                        val winner = users[calculatedWinnerIndex]
+                                                        selectedWinner = winner
+                                                        showCelebrationDialog = true
+                                                        AudioEngine.playSound("TURN_FINISHED")
+                                                        triggerConfetti()
+                                                    }
                                                 } else {
-                                                    spinTimeWheel()
+                                                    launchFullSpinWithMomentum(sliceCount, velocity, direction) { calculatedIndex ->
+                                                        val timeSlice = WHEEL_TIME_SLICES[calculatedIndex]
+                                                        selectedTimeSlice = timeSlice
+                                                        AudioEngine.playSound("TURN_FINISHED")
+                                                        triggerConfetti()
+                                                        timeWinnerBanner = "تم اختيار وقت: ${timeSlice.fullLabel} (${timeSlice.emoji})!"
+
+                                                        scope.launch {
+                                                            delay(1200)
+                                                            val winner = selectedWinner ?: users.firstOrNull() ?: return@launch
+                                                            TurnEngine.selectUser(winner.id)
+                                                            TurnEngine.setTargetDuration(timeSlice.seconds, isOpenMode = false)
+                                                            TurnEngine.startTurn(timeSlice.seconds, isOpenMode = false)
+                                                            onStartTurn(winner, timeSlice.seconds, false)
+                                                            onBackToMain()
+                                                        }
+                                                    }
+                                                }
+                                            } else {
+                                                // Swipe 1 or 2: Physics-based decay glide!
+                                                scope.launch {
+                                                    val flingVelocity = if (kotlin.math.abs(velocity) < 150f) {
+                                                        if (velocity >= 0f) 500f else -500f
+                                                    } else {
+                                                        velocity.coerceIn(-3500f, 3500f)
+                                                    }
+
+                                                    val tickJob = launch {
+                                                        while (true) {
+                                                            delay(140)
+                                                            AudioEngine.playSound("TICK")
+                                                        }
+                                                    }
+
+                                                    try {
+                                                        rotationAngle.animateDecay(
+                                                            initialVelocity = flingVelocity,
+                                                            animationSpec = exponentialDecay(
+                                                                frictionMultiplier = 0.85f,
+                                                                absVelocityThreshold = 40f
+                                                            )
+                                                        )
+                                                    } catch (e: Exception) {
+                                                        e.printStackTrace()
+                                                    } finally {
+                                                        tickJob.cancel()
+                                                    }
                                                 }
                                             }
                                         }
@@ -568,10 +675,11 @@ fun RandomWheelScreen(
                                         rotate(degrees = midAngle, pivot = center) {
                                             drawIntoCanvas { canvas ->
                                                 val nativeCanvas = canvas.nativeCanvas
+                                                val isTimeMode = (wheelMode == WheelMode.TIME_DURATIONS)
                                                 val dynamicTextSize = if (isSmallScreen) {
-                                                    if (sliceCount > 8) 22f else 28f
+                                                    if (isTimeMode || sliceCount > 8) 22f else 26f
                                                 } else {
-                                                    if (sliceCount > 8) 28f else 34f
+                                                    if (isTimeMode || sliceCount > 8) 26f else 32f
                                                 }
 
                                                 val paint = Paint().apply {
@@ -589,10 +697,10 @@ fun RandomWheelScreen(
                                                     "${u.avatarEmoji} $displayName"
                                                 } else {
                                                     val slice = WHEEL_TIME_SLICES[i]
-                                                    "${slice.emoji} ${slice.label}"
+                                                    "${slice.emoji} ${slice.shortLabel}"
                                                 }
 
-                                                val textX = center.x + radius - 16.dp.toPx()
+                                                val textX = center.x + radius - 14.dp.toPx()
                                                 val textY = center.y + (paint.textSize / 3f)
                                                 nativeCanvas.drawText(text, textX, textY, paint)
                                             }

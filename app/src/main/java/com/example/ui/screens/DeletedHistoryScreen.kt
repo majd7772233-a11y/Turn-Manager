@@ -22,6 +22,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.database.DeletedHistoryEntity
+import com.example.ui.theme.LocalIsLiquidGlass
+import com.example.ui.theme.liquidGlassCardColors
+import com.example.ui.theme.liquidGlassContainer
 import com.example.ui.viewmodel.MainViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -74,17 +77,29 @@ fun DeletedHistoryScreen(
     val bulkCount = deletedList.count { it.deletionType == "BULK" }
     val totalDurationSec: Long = deletedList.fold(0L) { acc, item -> acc + item.elapsedSeconds }
 
+    val isLiquidGlass = LocalIsLiquidGlass.current
+
     Scaffold(
+        containerColor = if (isLiquidGlass) Color.Transparent else MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("سجل الأدوار المحذوفة 🗑️", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        Text(
+                            "سجل الأدوار المحذوفة 🗑️",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = if (isLiquidGlass) Color.White else MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = "Back",
+                            tint = if (isLiquidGlass) Color.White else MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 },
                 actions = {
@@ -95,7 +110,7 @@ fun DeletedHistoryScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = if (isLiquidGlass) Color.Transparent else MaterialTheme.colorScheme.surface
                 )
             )
         }
@@ -104,7 +119,7 @@ fun DeletedHistoryScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(MaterialTheme.colorScheme.background)
+                .background(if (isLiquidGlass) Color.Transparent else MaterialTheme.colorScheme.background)
                 .padding(horizontal = 16.dp),
             contentPadding = PaddingValues(bottom = 24.dp)
         ) {
@@ -112,9 +127,11 @@ fun DeletedHistoryScreen(
             item {
                 Spacer(modifier = Modifier.height(8.dp))
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .liquidGlassContainer(RoundedCornerShape(16.dp)),
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                    colors = liquidGlassCardColors(defaultContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(
@@ -126,7 +143,7 @@ fun DeletedHistoryScreen(
                                 "الأرشيف السري للمحذوفات 🗝️",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 15.sp,
-                                color = MaterialTheme.colorScheme.primary
+                                color = if (isLiquidGlass) Color(0xFF64D2FF) else MaterialTheme.colorScheme.primary
                             )
                             Badge(containerColor = MaterialTheme.colorScheme.primaryContainer) {
                                 Text("$totalDeletedCount دور", color = MaterialTheme.colorScheme.onPrimaryContainer, fontWeight = FontWeight.Bold)
@@ -529,15 +546,17 @@ private fun DeletedItemCard(
     userEmoji: String,
     onClick: () -> Unit
 ) {
+    val isLiquidGlass = LocalIsLiquidGlass.current
     val dateFmt = remember { SimpleDateFormat("yyyy/MM/dd • HH:mm", Locale.getDefault()) }
     val deletedDateStr = remember(item.deletedAt) { dateFmt.format(Date(item.deletedAt)) }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .liquidGlassContainer(RoundedCornerShape(14.dp))
             .clickable { onClick() },
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
+        colors = liquidGlassCardColors(defaultContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
     ) {
         Row(
             modifier = Modifier
@@ -550,7 +569,7 @@ private fun DeletedItemCard(
                 modifier = Modifier
                     .size(46.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
+                    .background(if (isLiquidGlass) Color.White.copy(alpha = 0.15f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
                 contentAlignment = Alignment.Center
             ) {
                 Text(userEmoji, fontSize = 22.sp)
@@ -565,13 +584,13 @@ private fun DeletedItemCard(
                         item.userName,
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = if (isLiquidGlass) Color.White else MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         "• ${item.sessionName ?: ""}",
                         fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = if (isLiquidGlass) Color(0xFFD0E0F5) else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
@@ -582,7 +601,7 @@ private fun DeletedItemCard(
                         "مدة الدور: ${formatDuration(item.elapsedSeconds)}",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.primary
+                        color = if (isLiquidGlass) Color(0xFF64D2FF) else MaterialTheme.colorScheme.primary
                     )
                 }
 
@@ -591,7 +610,7 @@ private fun DeletedItemCard(
                 Text(
                     "حُذف في: $deletedDateStr",
                     fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    color = if (isLiquidGlass) Color(0xFFB0C4DE) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
             }
 
@@ -600,13 +619,17 @@ private fun DeletedItemCard(
                 val isBulk = item.deletionType == "BULK"
                 Surface(
                     shape = RoundedCornerShape(8.dp),
-                    color = if (isBulk) Color(0xFFFF9800).copy(alpha = 0.15f) else Color(0xFF2196F3).copy(alpha = 0.15f)
+                    color = if (isLiquidGlass) {
+                        if (isBulk) Color(0xFFFF9800).copy(alpha = 0.3f) else Color(0xFF2196F3).copy(alpha = 0.3f)
+                    } else {
+                        if (isBulk) Color(0xFFFF9800).copy(alpha = 0.15f) else Color(0xFF2196F3).copy(alpha = 0.15f)
+                    }
                 ) {
                     Text(
                         text = if (isBulk) "جماعي 📦" else "مفرد 🏷️",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (isBulk) Color(0xFFE65100) else Color(0xFF1976D2),
+                        color = if (isLiquidGlass) Color.White else (if (isBulk) Color(0xFFE65100) else Color(0xFF1976D2)),
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
@@ -614,7 +637,7 @@ private fun DeletedItemCard(
                 Icon(
                     Icons.Default.MoreVert,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                    tint = if (isLiquidGlass) Color.White.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                     modifier = Modifier.size(16.dp)
                 )
             }
@@ -624,8 +647,13 @@ private fun DeletedItemCard(
 
 @Composable
 private fun StatBox(title: String, value: String, color: Color) {
+    val isLiquidGlass = LocalIsLiquidGlass.current
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(title, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(
+            title,
+            fontSize = 11.sp,
+            color = if (isLiquidGlass) Color(0xFFD0E0F5) else MaterialTheme.colorScheme.onSurfaceVariant
+        )
         Spacer(modifier = Modifier.height(2.dp))
         Text(value, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = color)
     }

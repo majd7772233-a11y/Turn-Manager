@@ -27,6 +27,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.database.AchievementEntity
+import com.example.ui.theme.LocalIsLiquidGlass
+import com.example.ui.theme.liquidGlassCardColors
+import com.example.ui.theme.liquidGlassContainer
 import com.example.ui.viewmodel.MainViewModel
 
 @Composable
@@ -61,10 +64,12 @@ fun AchievementsScreen(
         }
     }
 
+    val isLiquidGlass = LocalIsLiquidGlass.current
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(if (isLiquidGlass) Color.Transparent else MaterialTheme.colorScheme.background)
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -73,8 +78,9 @@ fun AchievementsScreen(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .liquidGlassContainer(RoundedCornerShape(16.dp))
                     .padding(bottom = 12.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                colors = liquidGlassCardColors(defaultContainerColor = MaterialTheme.colorScheme.primaryContainer),
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Row(
@@ -341,6 +347,7 @@ fun AchievementGridItem(
     item: AchievementEntity,
     onClick: () -> Unit
 ) {
+    val isLiquidGlass = LocalIsLiquidGlass.current
     val unlocked = item.isUnlocked
     val progressRatio = if (item.maxProgress > 0) item.progress.toFloat() / item.maxProgress.toFloat() else 0f
 
@@ -348,14 +355,15 @@ fun AchievementGridItem(
         modifier = Modifier
             .fillMaxWidth()
             .height(180.dp)
+            .liquidGlassContainer(RoundedCornerShape(16.dp))
             .clickable { onClick() }
             .border(
                 1.dp,
                 if (unlocked) Color(0xFFFFD700).copy(alpha = 0.5f) else Color.Transparent,
                 RoundedCornerShape(16.dp)
             ),
-        colors = CardDefaults.cardColors(
-            containerColor = if (unlocked) MaterialTheme.colorScheme.surface 
+        colors = liquidGlassCardColors(
+            defaultContainerColor = if (unlocked) MaterialTheme.colorScheme.surface 
                              else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
         ),
         shape = RoundedCornerShape(16.dp)
@@ -374,6 +382,7 @@ fun AchievementGridItem(
                     .clip(CircleShape)
                     .background(
                         if (unlocked) Color(0xFFFFD700).copy(alpha = 0.15f)
+                        else if (isLiquidGlass) Color(0x2564D2FF)
                         else Color.Gray.copy(alpha = 0.15f)
                     ),
                 contentAlignment = Alignment.Center
@@ -389,7 +398,7 @@ fun AchievementGridItem(
                     Icon(
                         Icons.Default.Lock,
                         contentDescription = "Locked",
-                        tint = Color.Gray,
+                        tint = if (isLiquidGlass) Color(0xFF64D2FF).copy(alpha = 0.7f) else Color.Gray,
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -402,13 +411,13 @@ fun AchievementGridItem(
                     fontWeight = FontWeight.Bold,
                     fontSize = 13.sp,
                     textAlign = TextAlign.Center,
-                    color = if (unlocked) MaterialTheme.colorScheme.onSurface else Color.Gray,
+                    color = if (isLiquidGlass) Color.White else if (unlocked) MaterialTheme.colorScheme.onSurface else Color.Gray,
                     maxLines = 1
                 )
                 Text(
                     text = item.description,
                     fontSize = 10.sp,
-                    color = Color.Gray,
+                    color = if (isLiquidGlass) Color(0xFFD0E2F5) else Color.Gray,
                     textAlign = TextAlign.Center,
                     maxLines = 2,
                     lineHeight = 12.sp,
@@ -424,8 +433,8 @@ fun AchievementGridItem(
                         .fillMaxWidth()
                         .height(6.dp)
                         .clip(RoundedCornerShape(3.dp)),
-                    color = if (unlocked) Color(0xFFFFD700) else MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                    color = if (unlocked) Color(0xFFFFD700) else if (isLiquidGlass) Color(0xFF64D2FF) else MaterialTheme.colorScheme.primary,
+                    trackColor = if (isLiquidGlass) Color.White.copy(alpha = 0.12f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
                 )
                 
                 Row(
@@ -438,12 +447,12 @@ fun AchievementGridItem(
                         text = if (unlocked) "مكتمل ⭐" else "قيد التقدم",
                         fontSize = 8.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (unlocked) Color(0xFFFFD700) else Color.Gray
+                        color = if (unlocked) Color(0xFFFFD700) else if (isLiquidGlass) Color(0xFF64D2FF) else Color.Gray
                     )
                     Text(
                         text = "${item.progress}/${item.maxProgress}",
                         fontSize = 8.sp,
-                        color = Color.Gray
+                        color = if (isLiquidGlass) Color(0xFFD0E2F5) else Color.Gray
                     )
                 }
             }

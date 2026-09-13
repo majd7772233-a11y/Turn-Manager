@@ -33,6 +33,8 @@ import com.example.ui.components.GlowingTimerCircle
 import com.example.ui.viewmodel.MainViewModel
 import com.example.ui.components.verticalScrollbar
 import com.example.ui.components.horizontalScrollbar
+import com.example.ui.theme.liquidGlassCardColors
+import com.example.ui.theme.liquidGlassContainer
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -105,8 +107,10 @@ fun DashboardScreen(
     ) {
         // 1. Session Selector Header
         Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)),
+            modifier = Modifier
+                .fillMaxWidth()
+                .liquidGlassContainer(RoundedCornerShape(16.dp)),
+            colors = liquidGlassCardColors(defaultContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)),
             shape = RoundedCornerShape(16.dp)
         ) {
             Row(
@@ -222,8 +226,10 @@ fun DashboardScreen(
 
         // 2. Main Timer Display Card
         Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            modifier = Modifier
+                .fillMaxWidth()
+                .liquidGlassContainer(RoundedCornerShape(24.dp)),
+            colors = liquidGlassCardColors(defaultContainerColor = MaterialTheme.colorScheme.surface),
             shape = RoundedCornerShape(24.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {

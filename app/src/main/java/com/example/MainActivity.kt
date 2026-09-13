@@ -215,6 +215,7 @@ fun MainHubScreen(
     } else {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
+            containerColor = if (com.example.ui.theme.LocalIsLiquidGlass.current) androidx.compose.ui.graphics.Color.Transparent else MaterialTheme.colorScheme.background,
             topBar = {
                 CenterAlignedTopAppBar(
                     title = { Text("الأدوار لإدارة الوقت ⏱️", fontWeight = FontWeight.Bold) },
@@ -260,7 +261,7 @@ fun MainHubScreen(
                         }
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface
+                        containerColor = if (com.example.ui.theme.LocalIsLiquidGlass.current) androidx.compose.ui.graphics.Color.Transparent else MaterialTheme.colorScheme.surface
                     )
                 )
             },
@@ -283,7 +284,7 @@ fun MainHubScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
-                    .background(MaterialTheme.colorScheme.background)
+                    .background(if (com.example.ui.theme.LocalIsLiquidGlass.current) androidx.compose.ui.graphics.Color.Transparent else MaterialTheme.colorScheme.background)
             ) {
                 // Keep visited tabs in composition so scroll positions and inputs are preserved 100%
                 val visitedTab0 = rememberSaveable { mutableStateOf(true) }
